@@ -1,54 +1,47 @@
-import Database from 'better-sqlite3';
-import { fileURLToPath } from 'url';
-import path from 'path';
+import { MongoClient } from 'mongodb';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = path.join(__dirname, '..', 'urop.db');
+const DEFAULT_DB_NAME = 'urop_search_engine';
+const DEFAULT_COLLECTION_NAME = 'listings';
 
-const db = new Database(dbPath);
+let client;
+let database;
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+export async function connectToDatabase() {
+  if (database) {
+    return database;
+  }
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS listings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    professor TEXT,
-    department TEXT,
-    lab TEXT,
-    description TEXT,
-    requirements TEXT,
-    pay_or_credit TEXT,
-    posted_date TEXT,
-    source_url TEXT,
-    contact_email TEXT,
-    is_active INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT (datetime('now'))
-  );
+  const mongoUri = process.env.MONGODB_URI;
+  if (!mongoUri) {
+    throw new Error('Missing MONGODB_URI environment variable.');
+  }
 
-  CREATE VIRTUAL TABLE IF NOT EXISTS listings_fts USING fts5(
-    title, professor, department, lab, description, requirements,
-    content='listings',
-    content_rowid='id'
-  );
+  if (!client) {
+    client = new MongoClient(mongoUri);
+  }
 
-  CREATE TRIGGER IF NOT EXISTS listings_ai AFTER INSERT ON listings BEGIN
-    INSERT INTO listings_fts(rowid, title, professor, department, lab, description, requirements)
-    VALUES (new.id, new.title, new.professor, new.department, new.lab, new.description, new.requirements);
-  END;
+  await client.connect();
+  const dbName = process.env.MONGODB_DB_NAME || DEFAULT_DB_NAME;
+  database = client.db(dbName);
 
-  CREATE TRIGGER IF NOT EXISTS listings_ad AFTER DELETE ON listings BEGIN
-    INSERT INTO listings_fts(listings_fts, rowid, title, professor, department, lab, description, requirements)
-    VALUES ('delete', old.id, old.title, old.professor, old.department, old.lab, old.description, old.requirements);
-  END;
+  await database.collection(DEFAULT_COLLECTION_NAME).createIndexes([
+    { key: { is_active: 1, posted_date: -1 } },
+    { key: { title: 'text', professor: 'text', department: 'text', lab: 'text', description: 'text', requirements: 'text' } },
+  ]);
 
-  CREATE TRIGGER IF NOT EXISTS listings_au AFTER UPDATE ON listings BEGIN
-    INSERT INTO listings_fts(listings_fts, rowid, title, professor, department, lab, description, requirements)
-    VALUES ('delete', old.id, old.title, old.professor, old.department, old.lab, old.description, old.requirements);
-    INSERT INTO listings_fts(rowid, title, professor, department, lab, description, requirements)
-    VALUES (new.id, new.title, new.professor, new.department, new.lab, new.description, new.requirements);
-  END;
-`);
+  return database;
+}
 
-export default db;
+export async function getListingsCollection() {
+  const db = await connectToDatabase();
+  return db.collection(DEFAULT_COLLECTION_NAME);
+}
+
+export async function closeDatabaseConnection() {
+  if (!client) {
+    return;
+  }
+  await client.close();
+  client = undefined;
+  database = undefined;
+}

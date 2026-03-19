@@ -1,4 +1,4 @@
-import db from './db.js';
+import { closeDatabaseConnection, getListingsCollection } from './db.js';
 
 const listings = [
   {
@@ -703,20 +703,24 @@ const listings = [
   },
 ];
 
-db.exec('DELETE FROM listings');
-db.exec('DELETE FROM listings_fts');
+async function seed() {
+  const listingsCollection = await getListingsCollection();
+  await listingsCollection.deleteMany({});
+  await listingsCollection.insertMany(
+    listings.map((listing) => ({
+      ...listing,
+      is_active: Boolean(listing.is_active),
+      created_at: new Date(),
+    }))
+  );
+  console.log(`Seeded ${listings.length} UROP listings.`);
+}
 
-const insert = db.prepare(`
-  INSERT INTO listings (title, professor, department, lab, description, requirements, pay_or_credit, posted_date, source_url, contact_email, is_active)
-  VALUES (@title, @professor, @department, @lab, @description, @requirements, @pay_or_credit, @posted_date, @source_url, @contact_email, @is_active)
-`);
-
-const insertMany = db.transaction((items) => {
-  for (const item of items) {
-    insert.run(item);
-  }
-});
-
-insertMany(listings);
-
-console.log(`Seeded ${listings.length} UROP listings.`);
+seed()
+  .catch((error) => {
+    console.error('Seeding failed:', error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await closeDatabaseConnection();
+  });
