@@ -9,6 +9,11 @@ lerna-debug.log*
 .claude
 .env
 
+# ELx scraper — sensitive auth state and scraped data
+elx_scraper/auth/*.json
+elx_scraper/data/*.json
+elx_scraper/data/*.csv
+
 node_modules
 dist
 dist-ssr
