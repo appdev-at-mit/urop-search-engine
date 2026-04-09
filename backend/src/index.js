@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import cron from 'node-cron';
 import listingsRouter from './routes/listings.js';
+import labsRouter from './routes/labs.js';
 import adminRouter from './routes/admin.js';
 import { connectToDatabase } from './db.js';
 import {
@@ -20,6 +21,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/listings', listingsRouter);
+app.use('/api/labs', labsRouter);
 app.use('/api/admin', adminRouter);
 
 app.get('/api/health', (_req, res) => {

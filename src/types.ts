@@ -39,3 +39,40 @@ export interface ListingFilters {
   page?: number;
   sort?: 'recent' | 'title';
 }
+
+export interface Lab {
+  _id: string;
+  name: string;
+  acronym?: string | null;
+  department: string | null;
+  pi: string | null;
+  research_areas: string[];
+  description: string | null;
+  website: string | null;
+  contact_email?: string | null;
+  parent_org: string | null;
+  is_active: boolean;
+}
+
+export interface PaginatedLabResponse {
+  labs: Lab[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface LabFilters {
+  q?: string;
+  department?: string;
+  parent_org?: string;
+  research_area?: string;
+  page?: number;
+}
+
+export interface LabFilterOptions {
+  parentOrgs: string[];
+  researchAreas: string[];
+}

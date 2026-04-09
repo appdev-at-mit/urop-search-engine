@@ -28,9 +28,11 @@ export default function HomePage() {
     queryFn: () => fetchListings({ page: 1 }),
   })
 
-  function handleSearch(query: string) {
+  function handleSearch(query: string, filters?: { department?: string; pay?: string }) {
     const params = new URLSearchParams()
     if (query) params.set('q', query)
+    if (filters?.department) params.set('department', filters.department)
+    if (filters?.pay) params.set('pay_or_credit', filters.pay)
     navigate(`/listings?${params}`)
   }
 
@@ -44,32 +46,42 @@ export default function HomePage() {
   return (
     <main>
       {/* Hero */}
-      <section className="px-8 pb-24 pt-28">
-        <div className="mx-auto max-w-6xl">
-          <div className="animate-fade-in-up max-w-2xl">
+      <section className="px-8 pb-28 pt-36">
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="animate-fade-in-up">
             <p className="mb-4 text-sm font-medium text-text-tertiary">
               mit undergraduate research opportunities
             </p>
-            <h1 className="mb-4 text-5xl font-bold leading-[1.1] tracking-tight text-text sm:text-6xl">
+            <h1 className="mb-6 text-5xl font-bold leading-[1.1] tracking-tight text-text sm:text-7xl">
               find your next
               <br />
-              research opportunity.
+              <span className="rotating-texts">
+                <span className="width-setter">research opportunity.</span>
+                <span className="rotate-word">research opportunity.</span>
+                <span className="rotate-word">UROP.</span>
+                <span className="rotate-word">lab position.</span>
+                <span className="rotate-word">project.</span>
+              </span>
             </h1>
-            <p className="mb-10 max-w-lg text-base leading-relaxed text-text-secondary">
+            <p className="mx-auto mb-12 max-w-xl text-lg leading-relaxed text-text-secondary">
               search across MIT research opportunities. match your skills with
               labs, professors, and projects that need you.
             </p>
           </div>
-          <div className="animate-fade-in-up max-w-xl" style={{ animationDelay: '150ms' }}>
-            <SearchBar onSearch={handleSearch} large />
+          <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+            <SearchBar
+              onSearch={handleSearch}
+              large
+              departments={deptData ?? []}
+            />
           </div>
         </div>
       </section>
 
       {/* Stats */}
       <section className="px-8 pb-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             {[
               { icon: Search, label: 'Active Listings', value: stats.listings },
               { icon: Building2, label: 'Departments', value: stats.departments },
@@ -84,8 +96,8 @@ export default function HomePage() {
                   <stat.icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold tracking-tight text-text">{stat.value}</div>
-                  <div className="text-sm text-text-tertiary">{stat.label}</div>
+                  <div className="text-3xl font-bold tracking-tight text-text">{stat.value}</div>
+                  <div className="text-sm font-medium text-text-tertiary">{stat.label}</div>
                 </div>
               </div>
             ))}
@@ -93,33 +105,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Browse by Department */}
-      <section className="px-8 pb-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="rounded-2xl bg-surface p-8 sm:p-10">
-            <SectionDots />
-            <h2 className="mb-2 text-2xl font-bold tracking-tight text-primary">browse by department</h2>
-            <p className="mb-6 text-sm text-text-secondary">explore research areas across MIT.</p>
-            <div className="flex flex-wrap gap-2">
-              {deptData?.map((dept, i) => (
-                <button
-                  key={dept}
-                  onClick={() => navigate(`/listings?department=${encodeURIComponent(dept)}`)}
-                  className="animate-fade-in rounded-full border border-border bg-bg px-4 py-2 text-sm font-medium text-text-secondary transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary active:scale-[0.97]"
-                  style={{ animationDelay: `${i * 30}ms` }}
-                >
-                  {dept}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Recent Listings */}
       {previewListings.length > 0 && (
         <section className="px-8 pb-20">
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-7xl">
             <div className="rounded-2xl bg-surface p-8 sm:p-10">
               <SectionDots />
               <div className="mb-6 flex items-end justify-between">
@@ -135,7 +124,7 @@ export default function HomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {previewListings.map((listing, i) => (
                   <ListingCard key={listing._id} listing={listing} index={i} />
                 ))}
@@ -147,7 +136,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="px-8 pb-10 pt-4">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
           <p className="text-sm text-text-tertiary">urop search</p>
           <p className="text-sm text-text-tertiary">built for MIT students</p>
         </div>

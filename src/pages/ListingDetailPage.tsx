@@ -13,7 +13,7 @@ import {
   Tag,
   Clock,
 } from 'lucide-react'
-import { fetchListing } from '../lib/api'
+import { fetchListing, fetchLabs } from '../lib/api'
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -23,6 +23,14 @@ export default function ListingDetailPage() {
     queryFn: () => fetchListing(id!),
     enabled: !!id,
   })
+
+  const labSearchTerm = listing?.lab || null
+  const { data: matchingLabs } = useQuery({
+    queryKey: ['labMatch', labSearchTerm],
+    queryFn: () => fetchLabs({ q: labSearchTerm! }),
+    enabled: !!labSearchTerm,
+  })
+  const matchedLab = matchingLabs?.labs?.[0] ?? null
 
   if (isLoading) {
     return (
@@ -34,7 +42,7 @@ export default function ListingDetailPage() {
 
   if (isError || !listing) {
     return (
-      <main className="mx-auto max-w-3xl px-8 py-20 text-center">
+      <main className="mx-auto max-w-4xl px-8 py-20 text-center">
         <p className="font-medium text-text">Listing not found</p>
         <Link to="/listings" className="mt-4 inline-block text-sm text-primary hover:underline">
           Back to listings
@@ -55,7 +63,7 @@ export default function ListingDetailPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-8 py-12">
+    <main className="mx-auto max-w-4xl px-8 py-12">
       <Link
         to="/listings"
         className="animate-fade-in mb-8 inline-flex items-center gap-2 text-sm text-text-tertiary transition-colors hover:text-primary"
@@ -90,7 +98,20 @@ export default function ListingDetailPage() {
             <InfoItem icon={Building2} label="Department" value={listing.department} />
           )}
           {listing.lab && (
-            <InfoItem icon={FlaskConical} label="Lab" value={listing.lab} />
+            matchedLab ? (
+              <Link
+                to={`/labs/${matchedLab._id}`}
+                className="flex items-center gap-3 rounded-xl bg-bg p-4 transition-colors hover:bg-primary/5"
+              >
+                <FlaskConical className="h-4 w-4 shrink-0 text-primary" />
+                <div>
+                  <div className="text-xs text-text-tertiary">Lab</div>
+                  <div className="text-sm font-medium text-primary">{listing.lab}</div>
+                </div>
+              </Link>
+            ) : (
+              <InfoItem icon={FlaskConical} label="Lab" value={listing.lab} />
+            )
           )}
           {listing.city && (
             <InfoItem icon={MapPin} label="Location" value={listing.city} />
@@ -130,7 +151,7 @@ export default function ListingDetailPage() {
             <h2 className="mb-4 text-sm font-semibold text-primary">
               description
             </h2>
-            <p className="whitespace-pre-line text-[15px] leading-[1.75] text-text-secondary">
+            <p className="whitespace-pre-line text-base leading-[1.8] text-text-secondary">
               {listing.description}
             </p>
           </section>
@@ -193,10 +214,10 @@ function InfoItem({
   value: string
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-bg p-4">
-      <Icon className="h-4 w-4 shrink-0 text-primary" />
+    <div className="flex items-center gap-3.5 rounded-xl bg-bg p-4">
+      <Icon className="h-5 w-5 shrink-0 text-primary" />
       <div>
-        <div className="text-xs text-text-tertiary">{label}</div>
+        <div className="text-xs font-medium text-text-tertiary">{label}</div>
         <div className="text-sm font-medium text-text">{value}</div>
       </div>
     </div>

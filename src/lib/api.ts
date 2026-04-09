@@ -1,4 +1,4 @@
-import type { Listing, ListingFilters, PaginatedResponse } from '../types';
+import type { Listing, ListingFilters, PaginatedResponse, Lab, LabFilters, PaginatedLabResponse, LabFilterOptions } from '../types';
 
 const API_BASE = '/api';
 
@@ -25,5 +25,31 @@ export async function fetchListing(id: string): Promise<Listing> {
 export async function fetchDepartments(): Promise<string[]> {
   const res = await fetch(`${API_BASE}/listings/departments`);
   if (!res.ok) throw new Error('Failed to fetch departments');
+  return res.json();
+}
+
+export async function fetchLabs(filters: LabFilters = {}): Promise<PaginatedLabResponse> {
+  const params = new URLSearchParams();
+
+  if (filters.q) params.set('q', filters.q);
+  if (filters.department) params.set('department', filters.department);
+  if (filters.parent_org) params.set('parent_org', filters.parent_org);
+  if (filters.research_area) params.set('research_area', filters.research_area);
+  if (filters.page) params.set('page', String(filters.page));
+
+  const res = await fetch(`${API_BASE}/labs?${params}`);
+  if (!res.ok) throw new Error('Failed to fetch labs');
+  return res.json();
+}
+
+export async function fetchLab(id: string): Promise<Lab> {
+  const res = await fetch(`${API_BASE}/labs/${id}`);
+  if (!res.ok) throw new Error('Lab not found');
+  return res.json();
+}
+
+export async function fetchLabFilters(): Promise<LabFilterOptions> {
+  const res = await fetch(`${API_BASE}/labs/filters`);
+  if (!res.ok) throw new Error('Failed to fetch lab filters');
   return res.json();
 }
