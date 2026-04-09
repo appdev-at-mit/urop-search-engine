@@ -5,11 +5,14 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "seed": "node src/seed.js",
+    "import-elx": "node src/import-elx.js",
     "start": "node src/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
     "express": "^5.1.0",
-    "mongodb": "^6.17.0"
+    "mongodb": "^6.17.0",
+    "node-cron": "^4.2.1"
   }
 }

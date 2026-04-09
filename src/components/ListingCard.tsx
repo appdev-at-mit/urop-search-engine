@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Building2, User, Calendar, ArrowUpRight } from 'lucide-react'
+import { Building2, User, Calendar, ArrowUpRight, MapPin } from 'lucide-react'
 import type { Listing } from '../types'
 
 interface ListingCardProps {
@@ -14,15 +14,25 @@ const payBadgeColors: Record<string, string> = {
 }
 
 export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
-  const tags = listing.requirements
+  const reqTags = listing.requirements
     ?.split(',')
     .map((t) => t.trim())
     .filter(Boolean)
     .slice(0, 4)
 
+  const termTags = listing.terms
+    ?.split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
+
+  const tags = reqTags?.length ? reqTags : [
+    ...(listing.theme ? [listing.theme] : []),
+    ...(termTags || []),
+  ].slice(0, 4)
+
   return (
     <Link
-      to={`/listings/${listing.id}`}
+      to={`/listings/${listing._id}`}
       className="group block animate-slide-up rounded-2xl border border-border bg-surface p-6 transition-all duration-300 hover:border-text-tertiary hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
       style={{ animationDelay: `${index * 60}ms` }}
     >
@@ -55,6 +65,12 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
           <span className="flex items-center gap-1.5">
             <Building2 className="h-3.5 w-3.5 text-text-tertiary" />
             {listing.department}
+          </span>
+        )}
+        {listing.city && (
+          <span className="flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 text-text-tertiary" />
+            {listing.city}
           </span>
         )}
         {listing.posted_date && (

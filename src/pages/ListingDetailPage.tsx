@@ -9,6 +9,9 @@ import {
   Mail,
   ExternalLink,
   Loader2,
+  MapPin,
+  Tag,
+  Clock,
 } from 'lucide-react'
 import { fetchListing } from '../lib/api'
 
@@ -17,7 +20,7 @@ export default function ListingDetailPage() {
 
   const { data: listing, isLoading, isError } = useQuery({
     queryKey: ['listing', id],
-    queryFn: () => fetchListing(Number(id)),
+    queryFn: () => fetchListing(id!),
     enabled: !!id,
   })
 
@@ -89,11 +92,31 @@ export default function ListingDetailPage() {
           {listing.lab && (
             <InfoItem icon={FlaskConical} label="Lab" value={listing.lab} />
           )}
+          {listing.city && (
+            <InfoItem icon={MapPin} label="Location" value={listing.city} />
+          )}
+          {listing.terms && (
+            <InfoItem icon={Clock} label="Terms" value={listing.terms} />
+          )}
+          {listing.theme && (
+            <InfoItem icon={Tag} label="Type" value={listing.theme} />
+          )}
           {listing.posted_date && (
             <InfoItem
               icon={Calendar}
               label="Posted"
               value={new Date(listing.posted_date).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            />
+          )}
+          {listing.deadline_date && (
+            <InfoItem
+              icon={Calendar}
+              label="Deadline"
+              value={new Date(listing.deadline_date).toLocaleDateString('en-US', {
                 month: 'long',
                 day: 'numeric',
                 year: 'numeric',

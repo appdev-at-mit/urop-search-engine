@@ -16,7 +16,7 @@ export async function fetchListings(filters: ListingFilters = {}): Promise<Pagin
   return res.json();
 }
 
-export async function fetchListing(id: number): Promise<Listing> {
+export async function fetchListing(id: string): Promise<Listing> {
   const res = await fetch(`${API_BASE}/listings/${id}`);
   if (!res.ok) throw new Error('Listing not found');
   return res.json();
