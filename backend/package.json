@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "seed": "node src/seed.js",
+    "seed-labs": "node src/seed-labs.js",
     "import-elx": "node src/import-elx.js",
     "start": "node src/index.js"
   },

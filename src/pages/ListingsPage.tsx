@@ -2,7 +2,6 @@ import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
-import FilterBar from '../components/FilterBar'
 import ListingCard from '../components/ListingCard'
 import Pagination from '../components/Pagination'
 import { fetchListings, fetchDepartments } from '../lib/api'
@@ -25,42 +24,37 @@ export default function ListingsPage() {
     queryFn: () => fetchListings({ q, department, pay_or_credit, page }),
   })
 
-  function updateParams(updates: Record<string, string>) {
+  function handleSearch(query: string, filters?: { department?: string; pay?: string }) {
+    const next = new URLSearchParams()
+    if (query) next.set('q', query)
+    if (filters?.department) next.set('department', filters.department)
+    if (filters?.pay) next.set('pay_or_credit', filters.pay)
+    setSearchParams(next)
+  }
+
+  function updatePage(p: number) {
     const next = new URLSearchParams(searchParams)
-    for (const [key, value] of Object.entries(updates)) {
-      if (value) {
-        next.set(key, value)
-      } else {
-        next.delete(key)
-      }
-    }
-    if (updates.page === undefined) next.delete('page')
+    next.set('page', String(p))
     setSearchParams(next)
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-8 py-12">
       <div className="animate-fade-in mb-2">
-        <p className="mb-1 text-xs font-medium uppercase tracking-widest text-text-tertiary">
+        <p className="mb-1 text-sm font-medium text-text-tertiary">
           search
         </p>
-        <h1 className="mb-6 text-2xl font-bold tracking-tight text-text">browse listings</h1>
+        <h1 className="mb-8 text-4xl font-bold tracking-tight text-text">browse listings</h1>
       </div>
 
-      <div className="animate-fade-in-up mb-5" style={{ animationDelay: '100ms' }}>
+      <div className="animate-fade-in-up mb-8" style={{ animationDelay: '100ms' }}>
         <SearchBar
           initialQuery={q}
-          onSearch={(query) => updateParams({ q: query })}
-        />
-      </div>
-
-      <div className="animate-fade-in-up mb-8" style={{ animationDelay: '150ms' }}>
-        <FilterBar
+          onSearch={handleSearch}
+          large
           departments={departments}
-          selectedDepartment={department}
-          onDepartmentChange={(dept) => updateParams({ department: dept })}
-          selectedPay={pay_or_credit}
-          onPayChange={(pay) => updateParams({ pay_or_credit: pay })}
+          initialDepartment={department}
+          initialPay={pay_or_credit}
         />
       </div>
 
@@ -78,29 +72,29 @@ export default function ListingsPage() {
 
       {isLoading && (
         <div className="flex justify-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-text-tertiary" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       )}
 
       {isError && (
-        <div className="animate-fade-in rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
-          <p className="text-sm text-red-600">
+        <div className="animate-fade-in rounded-2xl border border-accent/20 bg-accent/5 p-10 text-center">
+          <p className="text-sm text-accent">
             Failed to load listings. Make sure the backend is running on port 3001.
           </p>
         </div>
       )}
 
       {data && data.listings.length === 0 && (
-        <div className="animate-fade-in rounded-2xl border border-border bg-surface p-16 text-center">
+        <div className="animate-fade-in rounded-2xl bg-surface p-16 text-center">
           <p className="font-medium text-text">No listings found</p>
           <p className="mt-2 text-sm text-text-tertiary">Try adjusting your search or filters</p>
         </div>
       )}
 
       {data && data.listings.length > 0 && (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {data.listings.map((listing, i) => (
-            <ListingCard key={listing.id} listing={listing} index={i} />
+            <ListingCard key={listing._id} listing={listing} index={i} />
           ))}
         </div>
       )}
@@ -110,7 +104,7 @@ export default function ListingsPage() {
           <Pagination
             page={page}
             totalPages={data.pagination.totalPages}
-            onPageChange={(p) => updateParams({ page: String(p) })}
+            onPageChange={updatePage}
           />
         </div>
       )}

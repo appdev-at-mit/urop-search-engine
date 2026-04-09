@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb';
 
 const DEFAULT_DB_NAME = 'urop_search_engine';
 const DEFAULT_COLLECTION_NAME = 'listings';
+const LABS_COLLECTION_NAME = 'labs';
 
 let client;
 let database;
@@ -29,12 +30,24 @@ export async function connectToDatabase() {
     { key: { title: 'text', professor: 'text', department: 'text', lab: 'text', description: 'text', requirements: 'text' } },
   ]);
 
+  await database.collection(LABS_COLLECTION_NAME).createIndexes([
+    { key: { name: 'text', pi: 'text', description: 'text' } },
+    { key: { parent_org: 1 } },
+    { key: { department: 1 } },
+    { key: { research_areas: 1 } },
+  ]);
+
   return database;
 }
 
 export async function getListingsCollection() {
   const db = await connectToDatabase();
   return db.collection(DEFAULT_COLLECTION_NAME);
+}
+
+export async function getLabsCollection() {
+  const db = await connectToDatabase();
+  return db.collection(LABS_COLLECTION_NAME);
 }
 
 export async function closeDatabaseConnection() {
