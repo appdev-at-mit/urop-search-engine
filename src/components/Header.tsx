@@ -10,11 +10,11 @@ export default function Header() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 bg-surface/90 backdrop-blur-lg">
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-70">
-          <FlaskConical className="h-5 w-5 text-accent" />
-          <span className="text-[15px] font-semibold tracking-tight text-text">UROP Search</span>
+    <header className="sticky top-0 z-50 bg-bg/80 backdrop-blur-lg">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-8">
+        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
+          <FlaskConical className="h-5 w-5 text-primary" />
+          <span className="text-[15px] font-semibold tracking-tight text-text">urop search</span>
         </Link>
 
         <nav className="flex items-center gap-6">
@@ -31,10 +31,13 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <Link
+            to="/admin"
+            className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
+          >
+            Admin
+          </Link>
         </nav>
-      </div>
-      <div className="mx-auto max-w-5xl px-6">
-        <div className="h-px bg-border" />
       </div>
     </header>
   )

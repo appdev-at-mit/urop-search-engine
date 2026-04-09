@@ -23,7 +23,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
       <button
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        className="rounded-xl p-2 text-text-tertiary transition-all hover:bg-bg hover:text-text disabled:opacity-30"
+        className="rounded-full p-2 text-text-tertiary transition-all hover:bg-surface hover:text-text disabled:opacity-30"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -37,10 +37,10 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
           <button
             key={p}
             onClick={() => onPageChange(p)}
-            className={`min-w-[36px] rounded-xl px-3 py-1.5 text-sm font-medium transition-all ${
+            className={`min-w-[36px] rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
               p === page
                 ? 'bg-primary text-white'
-                : 'text-text-secondary hover:bg-bg hover:text-text'
+                : 'text-text-secondary hover:bg-surface hover:text-text'
             }`}
           >
             {p}
@@ -51,7 +51,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
       <button
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
-        className="rounded-xl p-2 text-text-tertiary transition-all hover:bg-bg hover:text-text disabled:opacity-30"
+        className="rounded-full p-2 text-text-tertiary transition-all hover:bg-surface hover:text-text disabled:opacity-30"
       >
         <ChevronRight className="h-4 w-4" />
       </button>

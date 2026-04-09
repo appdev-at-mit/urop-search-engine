@@ -8,9 +8,9 @@ interface ListingCardProps {
 }
 
 const payBadgeColors: Record<string, string> = {
-  Pay: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-  Credit: 'bg-blue-50 text-blue-600 border-blue-100',
-  Both: 'bg-violet-50 text-violet-600 border-violet-100',
+  Pay: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+  Credit: 'bg-blue-50 text-blue-600 border-blue-200',
+  Both: 'bg-violet-50 text-violet-600 border-violet-200',
 }
 
 export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
@@ -33,17 +33,17 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
   return (
     <Link
       to={`/listings/${listing._id}`}
-      className="group block animate-slide-up rounded-2xl border border-border bg-surface p-6 transition-all duration-300 hover:border-text-tertiary hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
+      className="group block animate-slide-up rounded-xl border border-border/60 bg-bg p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-sm"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <h3 className="text-[15px] font-semibold leading-snug text-text transition-colors group-hover:text-accent">
+      <div className="mb-3 flex items-start justify-between gap-4">
+        <h3 className="text-[15px] font-semibold leading-snug text-text transition-colors group-hover:text-primary">
           {listing.title}
         </h3>
         <div className="flex shrink-0 items-center gap-2">
           {listing.pay_or_credit && (
             <span
-              className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${
+              className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                 payBadgeColors[listing.pay_or_credit] ?? 'bg-gray-50 text-text-secondary border-border'
               }`}
             >
@@ -54,7 +54,7 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
         </div>
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-secondary">
+      <div className="mb-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-text-secondary">
         {listing.professor && (
           <span className="flex items-center gap-1.5">
             <User className="h-3.5 w-3.5 text-text-tertiary" />
@@ -85,7 +85,7 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
       </div>
 
       {listing.description && (
-        <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-text-secondary">
+        <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-text-secondary">
           {listing.description}
         </p>
       )}
@@ -95,7 +95,7 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
           {tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-lg bg-bg px-2.5 py-1 text-xs font-medium text-text-secondary"
+              className="rounded-full bg-primary/8 px-2.5 py-0.5 text-xs font-medium text-primary"
             >
               {tag}
             </span>

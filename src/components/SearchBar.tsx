@@ -24,11 +24,11 @@ export default function SearchBar({
   return (
     <form onSubmit={handleSubmit} className="w-full">
       <div
-        className={`group flex items-center gap-3 rounded-2xl border bg-surface transition-all ${
+        className={`group flex items-center gap-3 rounded-2xl bg-surface transition-all ${
           large
-            ? 'border-border px-6 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] focus-within:shadow-[0_4px_30px_rgba(0,0,0,0.08)]'
-            : 'border-border px-4 py-3 focus-within:border-text-tertiary'
-        } focus-within:border-text-secondary`}
+            ? 'px-6 py-5 shadow-sm focus-within:shadow-md'
+            : 'border border-border px-4 py-3 focus-within:border-primary/40'
+        }`}
       >
         <Search className={`shrink-0 text-text-tertiary ${large ? 'h-5 w-5' : 'h-4 w-4'}`} />
         <input
@@ -42,7 +42,7 @@ export default function SearchBar({
         />
         <button
           type="submit"
-          className={`shrink-0 rounded-xl bg-primary font-medium text-white transition-all hover:bg-primary-light active:scale-[0.97] ${
+          className={`shrink-0 rounded-full bg-primary font-medium text-white transition-all hover:bg-primary-dark active:scale-[0.97] ${
             large ? 'flex items-center gap-2 px-6 py-2.5 text-sm' : 'px-4 py-1.5 text-sm'
           }`}
         >

@@ -24,7 +24,7 @@ export default function FilterBar({
       <select
         value={selectedDepartment}
         onChange={(e) => onDepartmentChange(e.target.value)}
-        className="rounded-xl border border-border bg-surface px-3.5 py-2 text-sm text-text outline-none transition-colors focus:border-text-secondary"
+        className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-text outline-none transition-colors focus:border-primary/40"
       >
         <option value="">All Departments</option>
         {departments.map((dept) => (
@@ -39,10 +39,10 @@ export default function FilterBar({
           <button
             key={opt}
             onClick={() => onPayChange(selectedPay === opt ? '' : opt)}
-            className={`rounded-xl border px-3.5 py-2 text-sm font-medium transition-all active:scale-[0.97] ${
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-all active:scale-[0.97] ${
               selectedPay === opt
                 ? 'border-primary bg-primary text-white'
-                : 'border-border bg-surface text-text-secondary hover:border-text-tertiary hover:text-text'
+                : 'border-border bg-surface text-text-secondary hover:border-primary/40 hover:text-primary'
             }`}
           >
             {opt}
@@ -56,7 +56,7 @@ export default function FilterBar({
             onDepartmentChange('')
             onPayChange('')
           }}
-          className="flex items-center gap-1 rounded-xl px-3 py-2 text-sm text-text-tertiary transition-colors hover:text-text"
+          className="flex items-center gap-1 rounded-full px-3 py-2 text-sm text-text-tertiary transition-colors hover:text-text"
         >
           <X className="h-3.5 w-3.5" />
           Clear
