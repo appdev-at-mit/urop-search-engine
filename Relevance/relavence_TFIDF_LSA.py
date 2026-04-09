@@ -147,12 +147,13 @@ def find_most_relevant_LSA(
     return result, indices
 
 if __name__ == "__main__":
-    sample_resume = "/Users/alyssachu/MIT/urop-search-engine/Relevance/Resume CS.pdf"
-    sample_projects = "/Users/alyssachu/MIT/urop-search-engine/Relevance/sample_projects.json"
+    base_dir = Path(__file__).resolve().parent
+    sample_resume = base_dir / "sample_resume.pdf"
+    sample_projects = base_dir / "sample_projects.json"
 
-    with open(sample_projects) as f:
+    with sample_projects.open("r", encoding="utf-8") as f:
         projects = json.load(f)
 
-    results, indices = find_most_relevant_LSA(sample_resume, projects, top_k=5)
+    results, indices = find_most_relevant_LSA(str(sample_resume), projects, top_k=5)
     for r in results:
         print(r["score"], r["title"])
