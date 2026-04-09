@@ -353,14 +353,24 @@ def find_most_relevant_LSA(
 
 
 if __name__ == "__main__":
+<<<<<<< HEAD
+    base_dir = Path(__file__).resolve().parent
+    sample_resume = base_dir / "sample_resume.pdf"
+    sample_projects = base_dir / "sample_projects.json"
+=======
     sample_resume   = r"C:/Users/neha_/OneDrive/Documents/MIT/urop_finder_2/urop-search-engine/Relevance/resume.pdf"
     sample_projects = r"C:/Users/neha_/OneDrive/Documents/MIT/urop_finder_2/urop-search-engine/Relevance/sample_projects.json"
+>>>>>>> main
 
-    with open(sample_projects) as f:
+    with sample_projects.open("r", encoding="utf-8") as f:
         projects = json.load(f)
 
+<<<<<<< HEAD
+    results, indices = find_most_relevant_LSA(str(sample_resume), projects, top_k=5)
+=======
     results, indices = find_most_relevant_LSA(sample_resume, projects, top_k=10)
     print()
+>>>>>>> main
     for r in results:
         match_flag = "✓" if r["major_match"] else " "
         print(f"[{match_flag}] {r['score']:.4f}  {r['department']:<40}  {r['title']}")
