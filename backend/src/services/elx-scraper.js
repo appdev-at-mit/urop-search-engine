@@ -9,6 +9,10 @@
  */
 
 import { getListingsCollection, connectToDatabase } from '../db.js';
+import {
+  buildCompensationCategoryMap,
+  mapElxListing,
+} from '../lib/map-elx-listing.js';
 
 const ELX_API_BASE = 'https://api.mit.edu/elo-v2';
 
@@ -104,15 +108,16 @@ async function elxFetch(path) {
   return res.json();
 }
 
-async function fetchDeptLookup() {
+async function fetchElxLookups() {
   try {
     const data = await elxFetch('/lookups');
     const depts = data?.departments || [];
-    const map = {};
-    for (const d of depts) map[d.id] = d.text;
-    return map;
+    const deptMap = {};
+    for (const d of depts) deptMap[d.id] = d.text;
+    const compLookup = buildCompensationCategoryMap(data);
+    return { deptMap, compLookup };
   } catch {
-    return {};
+    return { deptMap: {}, compLookup: new Map() };
   }
 }
 
@@ -130,50 +135,13 @@ async function fetchOpportunities() {
   throw new Error('Unexpected response shape from /opportunity');
 }
 
-// ── Mapping (mirrors import-elx.js) ────────────────────────────
-
-function mapListing(raw, deptMap) {
-  const texts = raw.texts || {};
-  const dept = raw.department || {};
-  const location = raw.location || {};
-  const theme = raw.primary_theme || {};
-  const terms = (raw.terms || []).map((t) => t.text).join(', ');
-
-  const deptId = dept.id || '';
-  const deptName = deptMap[deptId] || deptId.replace(/^D_/, '');
-
-  return {
-    elx_id: raw.id,
-    title: texts.title || '',
-    professor: null,
-    department: deptName,
-    lab: null,
-    description: texts.overview || texts.tagline || '',
-    requirements: null,
-    pay_or_credit: null,
-    posted_date: raw.start_date || new Date().toISOString().slice(0, 10),
-    source_url: raw.id ? `https://elx.mit.edu/opportunity/${raw.id}` : null,
-    contact_email: null,
-    is_active: raw.status?.id === 'L',
-    theme: theme.text || '',
-    terms,
-    location: location.text || '',
-    city: location.city || '',
-    deadline_date: raw.deadline_date || null,
-    start_date: raw.start_date || null,
-    end_date: raw.end_date || null,
-    source: 'elx.mit.edu',
-    updated_at: new Date(),
-  };
-}
-
 // ── Main scrape + upsert ────────────────────────────────────────
 
 export async function scrapeAndUpsert() {
-  const deptMap = await fetchDeptLookup();
+  const { deptMap, compLookup } = await fetchElxLookups();
   const rawItems = await fetchOpportunities();
 
-  const listings = rawItems.map((item) => mapListing(item, deptMap));
+  const listings = rawItems.map((item) => mapElxListing(item, deptMap, compLookup));
   const collection = await getListingsCollection();
 
   let inserted = 0;

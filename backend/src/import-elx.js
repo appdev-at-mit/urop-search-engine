@@ -17,6 +17,7 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getListingsCollection, closeDatabaseConnection } from './db.js';
+import { buildCompensationCategoryMap, mapElxListing } from './lib/map-elx-listing.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RAW_JSON_PATH = resolve(__dirname, '../../elx_scraper/data/urops_raw.json');
@@ -26,60 +27,24 @@ const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
 const CLEAR = args.includes('--clear');
 
-function loadDeptLookup() {
+function loadLookups() {
   try {
     const json = readFileSync(LOOKUPS_PATH, 'utf-8');
     const full = JSON.parse(json);
-    const depts = full?.lookups?.departments || [];
-    const map = {};
-    for (const d of depts) map[d.id] = d.text;
-    console.log(`Loaded ${Object.keys(map).length} department mappings`);
-    return map;
+    const lookups = full?.lookups || {};
+    const depts = lookups.departments || [];
+    const deptMap = {};
+    for (const d of depts) deptMap[d.id] = d.text;
+    const compLookup = buildCompensationCategoryMap(lookups);
+    console.log(`Loaded ${Object.keys(deptMap).length} department mappings`);
+    return { deptMap, compLookup };
   } catch {
-    console.warn('Could not load department lookups — will use raw IDs');
-    return {};
+    console.warn('Could not load lookups — will use raw department IDs');
+    return { deptMap: {}, compLookup: new Map() };
   }
 }
 
-const DEPT_MAP = loadDeptLookup();
-
-function mapListing(raw) {
-  const texts = raw.texts || {};
-  const dept = raw.department || {};
-  const location = raw.location || {};
-  const theme = raw.primary_theme || {};
-  const terms = (raw.terms || []).map((t) => t.text).join(', ');
-
-  const deptId = dept.id || '';
-  const deptName = DEPT_MAP[deptId] || deptId.replace(/^D_/, '');
-
-  return {
-    elx_id: raw.id,
-    title: texts.title || '',
-    professor: null,
-    department: deptName,
-    lab: null,
-    description: texts.overview || texts.tagline || '',
-    requirements: null,
-    pay_or_credit: null,
-    posted_date: raw.start_date || new Date().toISOString().slice(0, 10),
-    source_url: raw.id
-      ? `https://elx.mit.edu/opportunity/${raw.id}`
-      : null,
-    contact_email: null,
-    is_active: raw.status?.id === 'L',
-    theme: theme.text || '',
-    terms,
-    location: location.text || '',
-    city: location.city || '',
-    deadline_date: raw.deadline_date || null,
-    start_date: raw.start_date || null,
-    end_date: raw.end_date || null,
-    source: 'elx.mit.edu',
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
-}
+const { deptMap: DEPT_MAP, compLookup: COMP_LOOKUP } = loadLookups();
 
 async function main() {
   let rawData;
@@ -99,7 +64,10 @@ async function main() {
 
   console.log(`Read ${rawData.length} listings from scraped data`);
 
-  const listings = rawData.map(mapListing);
+  const listings = rawData.map((raw) => {
+    const row = mapElxListing(raw, DEPT_MAP, COMP_LOOKUP);
+    return { ...row, created_at: new Date(), updated_at: new Date() };
+  });
 
   if (DRY_RUN) {
     console.log('\n--- DRY RUN ---');

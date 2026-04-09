@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
 import ListingCard from '../components/ListingCard'
 import Pagination from '../components/Pagination'
-import { fetchListings, fetchDepartments } from '../lib/api'
+import { fetchListings, fetchDepartments, fetchListingLabs } from '../lib/api'
 
 export default function ListingsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -12,6 +12,8 @@ export default function ListingsPage() {
   const q = searchParams.get('q') ?? ''
   const department = searchParams.get('department') ?? ''
   const pay_or_credit = searchParams.get('pay_or_credit') ?? ''
+  const opportunity = searchParams.get('opportunity') ?? ''
+  const lab = searchParams.get('lab') ?? ''
   const page = parseInt(searchParams.get('page') ?? '1', 10)
 
   const { data: departments = [] } = useQuery({
@@ -19,16 +21,26 @@ export default function ListingsPage() {
     queryFn: fetchDepartments,
   })
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['listings', q, department, pay_or_credit, page],
-    queryFn: () => fetchListings({ q, department, pay_or_credit, page }),
+  const { data: labs = [] } = useQuery({
+    queryKey: ['listing-labs'],
+    queryFn: fetchListingLabs,
   })
 
-  function handleSearch(query: string, filters?: { department?: string; pay?: string }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['listings', q, department, pay_or_credit, opportunity, lab, page],
+    queryFn: () => fetchListings({ q, department, pay_or_credit, opportunity, lab, page }),
+  })
+
+  function handleSearch(
+    query: string,
+    filters?: { department?: string; pay?: string; opportunity?: string; lab?: string },
+  ) {
     const next = new URLSearchParams()
     if (query) next.set('q', query)
     if (filters?.department) next.set('department', filters.department)
     if (filters?.pay) next.set('pay_or_credit', filters.pay)
+    if (filters?.opportunity) next.set('opportunity', filters.opportunity)
+    if (filters?.lab) next.set('lab', filters.lab)
     setSearchParams(next)
   }
 
@@ -49,12 +61,16 @@ export default function ListingsPage() {
 
       <div className="animate-fade-in-up mb-8" style={{ animationDelay: '100ms' }}>
         <SearchBar
+          key={`${q}-${department}-${pay_or_credit}-${opportunity}-${lab}`}
           initialQuery={q}
           onSearch={handleSearch}
           large
           departments={departments}
+          labs={labs}
           initialDepartment={department}
           initialPay={pay_or_credit}
+          initialOpportunity={opportunity}
+          initialLab={lab}
         />
       </div>
 

@@ -4,11 +4,17 @@ import { getListingsCollection } from '../db.js';
 
 const router = Router();
 
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 router.get('/', async (req, res) => {
   const {
     q = '',
     department = '',
     pay_or_credit = '',
+    opportunity = '',
+    lab = '',
     page = '1',
     limit = '20',
     sort = 'recent',
@@ -36,8 +42,21 @@ router.get('/', async (req, res) => {
     if (department) {
       query.department = { $regex: department, $options: 'i' };
     }
+    if (lab) {
+      const trimmed = lab.trim();
+      query.lab = { $regex: `^${escapeRegex(trimmed)}$`, $options: 'i' };
+    }
     if (pay_or_credit) {
       query.pay_or_credit = pay_or_credit;
+    }
+
+    const opportunityTheme = {
+      urop: /^Undergraduate Research \(UROP\)$/i,
+      global: /^Global Opportunities$/i,
+      not_urop: /^Research \(not UROP\)$/i,
+    };
+    if (opportunity && Object.prototype.hasOwnProperty.call(opportunityTheme, opportunity)) {
+      query.theme = { $regex: opportunityTheme[opportunity].source, $options: 'i' };
     }
 
     const sortOrder = sort === 'title' ? { title: 1 } : { posted_date: -1 };
@@ -73,6 +92,21 @@ router.get('/departments', async (_req, res) => {
     res.json(departments);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch departments', details: error.message });
+  }
+});
+
+router.get('/labs', async (_req, res) => {
+  try {
+    const listingsCollection = await getListingsCollection();
+    const labs = await listingsCollection.distinct('lab', {
+      is_active: true,
+      lab: { $nin: [null, ''] },
+    });
+
+    labs.sort((a, b) => a.localeCompare(b));
+    res.json(labs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch labs', details: error.message });
   }
 });
 

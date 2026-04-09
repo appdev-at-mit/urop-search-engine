@@ -8,6 +8,8 @@ export async function fetchListings(filters: ListingFilters = {}): Promise<Pagin
   if (filters.q) params.set('q', filters.q);
   if (filters.department) params.set('department', filters.department);
   if (filters.pay_or_credit) params.set('pay_or_credit', filters.pay_or_credit);
+  if (filters.opportunity) params.set('opportunity', filters.opportunity);
+  if (filters.lab) params.set('lab', filters.lab);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.sort) params.set('sort', filters.sort);
 
@@ -25,6 +27,12 @@ export async function fetchListing(id: string): Promise<Listing> {
 export async function fetchDepartments(): Promise<string[]> {
   const res = await fetch(`${API_BASE}/listings/departments`);
   if (!res.ok) throw new Error('Failed to fetch departments');
+  return res.json();
+}
+
+export async function fetchListingLabs(): Promise<string[]> {
+  const res = await fetch(`${API_BASE}/listings/labs`);
+  if (!res.ok) throw new Error('Failed to fetch labs');
   return res.json();
 }
 

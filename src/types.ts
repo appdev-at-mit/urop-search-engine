@@ -36,6 +36,10 @@ export interface ListingFilters {
   q?: string;
   department?: string;
   pay_or_credit?: string;
+  /** urop | global | not_urop — matches ELx primary_theme */
+  opportunity?: string;
+  /** Case-insensitive substring match on listing lab name */
+  lab?: string;
   page?: number;
   sort?: 'recent' | 'title';
 }

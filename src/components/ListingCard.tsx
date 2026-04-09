@@ -1,6 +1,12 @@
 import { Link } from 'react-router-dom'
 import { Building2, Calendar, MapPin } from 'lucide-react'
 import type { Listing } from '../types'
+import {
+  classifyOpportunityType,
+  opportunityCardClass,
+  opportunityBadgeClass,
+  opportunityKindLabel,
+} from '../lib/opportunityType'
 
 interface ListingCardProps {
   listing: Listing
@@ -14,20 +20,34 @@ const payBadgeColors: Record<string, string> = {
 }
 
 export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
-  const tags = [
-    ...(listing.theme ? [listing.theme] : []),
-    ...(listing.terms?.split(',').map((t) => t.trim()).filter(Boolean) || []),
-  ].slice(0, 3)
+  const kind = classifyOpportunityType(listing.theme)
+  const typeLabel = opportunityKindLabel(kind)
+
+  const termTags =
+    listing.terms
+      ?.split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 3) ?? []
 
   return (
     <Link
       to={`/listings/${listing._id}`}
-      className="group block animate-slide-up rounded-xl bg-surface p-6 transition-all duration-200 hover:shadow-md"
+      className={`group block animate-slide-up rounded-xl p-6 transition-all duration-200 hover:shadow-md ${opportunityCardClass(kind)}`}
       style={{ animationDelay: `${index * 40}ms` }}
     >
-      <h3 className="mb-2.5 text-lg font-bold leading-snug tracking-tight text-text transition-colors group-hover:text-primary">
-        {listing.title}
-      </h3>
+      <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+        <h3 className="text-lg font-bold leading-snug tracking-tight text-text transition-colors group-hover:text-primary">
+          {listing.title}
+        </h3>
+        {typeLabel && (
+          <span
+            className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${opportunityBadgeClass(kind)}`}
+          >
+            {typeLabel}
+          </span>
+        )}
+      </div>
 
       <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-tertiary">
         {listing.department && (
@@ -69,10 +89,10 @@ export default function ListingCard({ listing, index = 0 }: ListingCardProps) {
             {listing.pay_or_credit}
           </span>
         )}
-        {tags.map((tag) => (
+        {termTags.map((tag) => (
           <span
             key={tag}
-            className="rounded-full bg-primary/8 px-2.5 py-1 text-xs font-medium text-primary"
+            className="rounded-full bg-black/[0.06] px-2.5 py-1 text-xs font-medium text-text-secondary"
           >
             {tag}
           </span>

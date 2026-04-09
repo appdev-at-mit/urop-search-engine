@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, Search, Building2, Sparkles } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
 import ListingCard from '../components/ListingCard'
-import { fetchListings, fetchDepartments } from '../lib/api'
+import { fetchListings, fetchDepartments, fetchListingLabs } from '../lib/api'
 
 function SectionDots() {
   return (
@@ -23,16 +23,26 @@ export default function HomePage() {
     queryFn: fetchDepartments,
   })
 
+  const { data: labsData } = useQuery({
+    queryKey: ['listing-labs'],
+    queryFn: fetchListingLabs,
+  })
+
   const { data: recentData } = useQuery({
     queryKey: ['listings', 'recent-preview'],
     queryFn: () => fetchListings({ page: 1 }),
   })
 
-  function handleSearch(query: string, filters?: { department?: string; pay?: string }) {
+  function handleSearch(
+    query: string,
+    filters?: { department?: string; pay?: string; opportunity?: string; lab?: string },
+  ) {
     const params = new URLSearchParams()
     if (query) params.set('q', query)
     if (filters?.department) params.set('department', filters.department)
     if (filters?.pay) params.set('pay_or_credit', filters.pay)
+    if (filters?.opportunity) params.set('opportunity', filters.opportunity)
+    if (filters?.lab) params.set('lab', filters.lab)
     navigate(`/listings?${params}`)
   }
 
@@ -73,6 +83,7 @@ export default function HomePage() {
               onSearch={handleSearch}
               large
               departments={deptData ?? []}
+              labs={labsData ?? []}
             />
           </div>
         </div>

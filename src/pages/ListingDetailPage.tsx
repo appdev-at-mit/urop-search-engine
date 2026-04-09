@@ -14,6 +14,12 @@ import {
   Clock,
 } from 'lucide-react'
 import { fetchListing, fetchLabs } from '../lib/api'
+import {
+  classifyOpportunityType,
+  opportunityCardClass,
+  opportunityBadgeClass,
+  opportunityKindLabel,
+} from '../lib/opportunityType'
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -62,6 +68,9 @@ export default function ListingDetailPage() {
     Both: 'bg-violet-50 text-violet-600 border-violet-200',
   }
 
+  const oppKind = classifyOpportunityType(listing.theme)
+  const oppLabel = opportunityKindLabel(oppKind)
+
   return (
     <main className="mx-auto max-w-4xl px-8 py-12">
       <Link
@@ -72,21 +81,32 @@ export default function ListingDetailPage() {
         Back to listings
       </Link>
 
-      <article className="animate-fade-in-up rounded-2xl bg-surface p-8 sm:p-10">
+      <article
+        className={`animate-fade-in-up rounded-2xl p-8 sm:p-10 ${opportunityCardClass(oppKind)}`}
+      >
         <div className="mb-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <h1 className="text-3xl font-bold leading-tight tracking-tight text-text">
               {listing.title}
             </h1>
-            {listing.pay_or_credit && (
-              <span
-                className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium ${
-                  payColors[listing.pay_or_credit] ?? 'bg-bg text-text-secondary border-border'
-                }`}
-              >
-                {listing.pay_or_credit}
-              </span>
-            )}
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              {oppLabel && (
+                <span
+                  className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${opportunityBadgeClass(oppKind)}`}
+                >
+                  {oppLabel}
+                </span>
+              )}
+              {listing.pay_or_credit && (
+                <span
+                  className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+                    payColors[listing.pay_or_credit] ?? 'bg-bg text-text-secondary border-border'
+                  }`}
+                >
+                  {listing.pay_or_credit}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

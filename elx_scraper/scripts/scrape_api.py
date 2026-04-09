@@ -14,6 +14,7 @@ Usage:
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +30,105 @@ OPPORTUNITY_API = "api.mit.edu/elo-v2/opportunity"
 
 # Resolved at runtime from the /lookups endpoint
 _dept_lookup: dict[str, str] = {}
+_comp_lookup: dict[int, str | None] = {}  # set in export() from /lookups
+
+_EMAIL_RE = re.compile(
+    r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b",
+)
+
+
+def build_compensation_lookup(lookups_body: dict) -> dict[int, str | None]:
+    """Map compensation id → 'pay' | 'credit' | None (volunteer)."""
+    out: dict[int, str | None] = {}
+    for c in lookups_body.get("compensations") or []:
+        t = (c.get("text") or "").lower()
+        cid = c.get("id")
+        if cid is None:
+            continue
+        if "volunteer" in t or re.match(r"^none/", c.get("text") or "", re.I):
+            out[cid] = None
+        elif "credit" in t:
+            out[cid] = "credit"
+        elif "pay" in t or "hourly" in t or "stipend" in t:
+            out[cid] = "pay"
+    return out
+
+
+def extract_contact_email(overview: str, tagline: str) -> str:
+    text = f"{tagline or ''}\n{overview or ''}"
+    matches = _EMAIL_RE.findall(text)
+    if not matches:
+        return ""
+    lower_mit = [m for m in matches if m.lower().endswith("@mit.edu")]
+    if lower_mit:
+        return lower_mit[0].lower()
+    edu = [m for m in matches if re.search(r"\.(edu|ac\.[a-z.]+)$", m, re.I)]
+    if edu:
+        return edu[0].lower()
+    return matches[0].lower()
+
+
+def infer_pay_or_credit(overview: str, tagline: str) -> str:
+    text = f"{tagline or ''}\n{overview or ''}"
+    if not text.strip():
+        return ""
+
+    pay = bool(
+        re.search(r"\b(hourly|stipend|wage|salary|/\s*hr\b|\$\s*\d)", text, re.I)
+        or re.search(r"\bpaid\b", text, re.I)
+        or re.search(r"\bcompensat", text, re.I)
+        or re.search(r"\bUROP\s+direct\s+funding", text)
+        or re.search(r"\bfunded\s+urop", text, re.I),
+    )
+    credit = bool(
+        re.search(r"\bcredit[- ]bearing\b", text, re.I)
+        or re.search(r"\bfor[- ]credit\b", text, re.I)
+        or re.search(r"\bcourse\s+credit\b", text, re.I)
+        or re.search(r"\bresearch\s+credit\b", text, re.I)
+        or re.search(r"\bacademic\s+credit\b", text, re.I)
+        or re.search(r"\bor\s+credit\b", text, re.I)
+        or re.search(r"\bcredit\s+or\b", text, re.I)
+        or (
+            re.search(r"\bregister\s+for\b", text, re.I)
+            and re.search(r"\bcredit\b", text, re.I)
+        ),
+    )
+    volunteer_only = bool(
+        re.search(r"\b(volunteer|unpaid|no\s+pay|without\s+pay|non[- ]paid)\b", text, re.I)
+    ) and not pay and not credit
+
+    if volunteer_only:
+        return ""
+    if pay and credit:
+        return "Both"
+    if pay:
+        return "Pay"
+    if credit:
+        return "Credit"
+    return ""
+
+
+def pay_from_structured(compensation, lookup: dict[int, str | None]) -> str:
+    if compensation is None or not lookup:
+        return ""
+    ids = compensation if isinstance(compensation, list) else [compensation]
+    has_pay = has_credit = False
+    for item in ids:
+        cid = item["id"] if isinstance(item, dict) else item
+        if cid is None:
+            continue
+        cat = lookup.get(cid)
+        if cat == "pay":
+            has_pay = True
+        elif cat == "credit":
+            has_credit = True
+    if has_pay and has_credit:
+        return "Both"
+    if has_pay:
+        return "Pay"
+    if has_credit:
+        return "Credit"
+    return ""
 
 
 def check_auth(page) -> bool:
@@ -61,15 +161,21 @@ def extract_fields(raw_item: dict) -> dict:
     theme = raw_item.get("primary_theme") or {}
     terms = raw_item.get("terms") or []
     item_id = raw_item.get("id", "")
+    overview = texts.get("overview") or ""
+    tagline = texts.get("tagline") or ""
 
     dept_id = dept.get("id", "")
     dept_name = _dept_lookup.get(dept_id, dept_id)
 
+    structured = pay_from_structured(raw_item.get("compensation"), _comp_lookup)
+    pay_or_credit = structured or infer_pay_or_credit(overview, tagline)
+    contact_email = extract_contact_email(overview, tagline)
+
     return {
         "id": item_id,
         "title": texts.get("title", ""),
-        "tagline": texts.get("tagline") or "",
-        "description": texts.get("overview", ""),
+        "tagline": tagline,
+        "description": overview,
         "department": dept_name,
         "department_id": dept_id,
         "theme": theme.get("text", ""),
@@ -80,6 +186,8 @@ def extract_fields(raw_item: dict) -> dict:
         "deadline_date": raw_item.get("deadline_date") or "",
         "start_date": raw_item.get("start_date") or "",
         "end_date": raw_item.get("end_date") or "",
+        "pay_or_credit": pay_or_credit,
+        "contact_email": contact_email,
         "url": f"https://elx.mit.edu/opportunity/{item_id}" if item_id else "",
         "scraped_at": datetime.now(timezone.utc).isoformat(),
         "source": "elx.mit.edu",
@@ -217,12 +325,14 @@ def find_response(captured: dict, *labels: str):
 
 def export(captured: dict):
     """Parse the opportunity endpoint and export to JSON + CSV."""
-    global _dept_lookup
+    global _dept_lookup, _comp_lookup
+    _comp_lookup = {}
 
     # Build department ID → name lookup from /lookups
     lookups = find_response(captured, "lookups")
     if lookups and isinstance(lookups, dict):
         _dept_lookup = build_dept_lookup(lookups)
+        _comp_lookup = build_compensation_lookup(lookups)
         print(f"Loaded {len(_dept_lookup)} department mappings from /lookups")
 
     # Find the opportunity listings
