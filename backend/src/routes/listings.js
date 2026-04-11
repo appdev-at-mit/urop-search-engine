@@ -1,6 +1,15 @@
 import { Router } from 'express';
 import { ObjectId } from 'mongodb';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { getListingsCollection } from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const ROOT_DIR = resolve(__dirname, '..', '..', '..');
+const RELEVANCE_SCRIPT = resolve(ROOT_DIR, 'Relevance', 'relavence_TFIDF_LSA.py');
+const PYTHON_EXECUTABLE = process.env.PYTHON_PATH || process.env.PYTHON || 'python';
 
 const router = Router();
 
@@ -77,6 +86,68 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch listings', details: error.message });
+  }
+});
+
+router.post('/rank/resume', async (req, res) => {
+  const { resumePath, top_k = 10 } = req.body;
+  if (!resumePath || typeof resumePath !== 'string') {
+    return res.status(400).json({ error: 'resumePath is required in request body' });
+  }
+
+  const topK = Math.min(50, Math.max(1, Number(top_k) || 10));
+
+  try {
+    const args = [
+      RELEVANCE_SCRIPT,
+      '--resume-path',
+      resumePath,
+      '--top-k',
+      String(topK),
+      '--json',
+    ];
+
+    const ranker = spawn(PYTHON_EXECUTABLE, args, {
+      cwd: ROOT_DIR,
+      env: process.env,
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    ranker.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+    ranker.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    ranker.on('error', (error) => {
+      res.status(500).json({ error: 'Failed to start resume ranker', details: error.message });
+    });
+
+    ranker.on('close', (code) => {
+      if (code !== 0) {
+        return res.status(500).json({
+          error: 'Resume ranker failed',
+          details: stderr || `exit code ${code}`,
+        });
+      }
+
+      try {
+        const results = JSON.parse(stdout);
+        res.json({ results });
+      } catch (parseError) {
+        res.status(500).json({
+          error: 'Invalid JSON returned from resume ranker',
+          details: parseError.message,
+          stdout,
+          stderr,
+        });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to rank listings', details: error.message });
   }
 });
 
