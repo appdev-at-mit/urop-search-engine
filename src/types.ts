@@ -79,4 +79,5 @@ export interface LabFilters {
 export interface LabFilterOptions {
   parentOrgs: string[];
   researchAreas: string[];
+  departments: string[];
 }
