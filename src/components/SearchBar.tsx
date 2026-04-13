@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Search, ArrowRight, ChevronDown, X } from 'lucide-react'
+import { Search, ArrowRight, Filter, X } from 'lucide-react'
+import LabeledFilterSelect from './LabeledFilterSelect'
 
 export type SearchFilters = {
   department?: string
@@ -21,12 +22,16 @@ interface SearchBarProps {
   initialLab?: string
 }
 
-const payOptions = ['Pay', 'Credit', 'Both']
+const payOptions: { value: string; label: string }[] = [
+  { value: 'Pay', label: 'Pay' },
+  { value: 'Credit', label: 'Credit' },
+  { value: 'Both', label: 'Both' },
+]
 
 const opportunityOptions: { value: string; label: string }[] = [
   { value: 'urop', label: 'UROP' },
-  { value: 'global', label: 'Global' },
-  { value: 'not_urop', label: 'Not UROP' },
+  { value: 'global', label: 'Global opportunities' },
+  { value: 'not_urop', label: 'Research (not UROP)' },
 ]
 
 export default function SearchBar({
@@ -50,6 +55,21 @@ export default function SearchBar({
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     onSearch(query.trim(), { department, pay, opportunity, lab })
+  }
+
+  /** Apply filter fields and sync URL/results immediately (Airtable-style). */
+  function commitFilters(overrides: Partial<SearchFilters>) {
+    const next: SearchFilters = {
+      department: overrides.department !== undefined ? overrides.department : department,
+      pay: overrides.pay !== undefined ? overrides.pay : pay,
+      opportunity: overrides.opportunity !== undefined ? overrides.opportunity : opportunity,
+      lab: overrides.lab !== undefined ? overrides.lab : lab,
+    }
+    if (overrides.department !== undefined) setDepartment(next.department ?? '')
+    if (overrides.pay !== undefined) setPay(next.pay ?? '')
+    if (overrides.opportunity !== undefined) setOpportunity(next.opportunity ?? '')
+    if (overrides.lab !== undefined) setLab(next.lab ?? '')
+    onSearch(query.trim(), next)
   }
 
   const showFilters = large && departments
@@ -88,91 +108,81 @@ export default function SearchBar({
         </div>
 
         {showFilters && (
-          <div className="flex flex-col gap-3 border-t border-border/60 px-7 py-3.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="mr-1 text-xs font-medium uppercase tracking-wide text-text-tertiary">
-                Type
-              </span>
-              {opportunityOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setOpportunity(opportunity === opt.value ? '' : opt.value)}
-                  className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all active:scale-[0.97] ${
-                    opportunity === opt.value
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-border bg-bg text-text-secondary hover:border-primary/40 hover:text-primary'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <select
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  className="appearance-none rounded-full border border-border bg-bg py-1.5 pl-3.5 pr-8 text-sm text-text-secondary outline-none transition-colors hover:border-primary/40 focus:border-primary/40"
-                >
-                  <option value="">All Departments</option>
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" />
+          <div className="border-t border-border/60 px-7 py-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-text-secondary">
+                <Filter className="h-4 w-4 shrink-0 text-text-tertiary" aria-hidden />
+                <span className="text-sm font-medium text-text">Filters</span>
+                <span className="text-xs text-text-tertiary">narrow results by field</span>
               </div>
-
-              <div className="relative min-w-[10rem] max-w-[min(100%,20rem)]">
-                <select
-                  value={lab}
-                  onChange={(e) => setLab(e.target.value)}
-                  className="max-w-full appearance-none rounded-full border border-border bg-bg py-1.5 pl-3.5 pr-8 text-sm text-text-secondary outline-none transition-colors hover:border-primary/40 focus:border-primary/40"
-                  title="Filter by lab"
-                >
-                  <option value="">All labs</option>
-                  {labs.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" />
-              </div>
-
-              {payOptions.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => setPay(pay === opt ? '' : opt)}
-                  className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all active:scale-[0.97] ${
-                    pay === opt
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-border bg-bg text-text-secondary hover:border-primary/40 hover:text-primary'
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
-
               {hasFilters && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setDepartment('')
-                    setPay('')
-                    setOpportunity('')
-                    setLab('')
-                  }}
-                  className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:text-text"
+                  onClick={() => commitFilters({ department: '', pay: '', opportunity: '', lab: '' })}
+                  className="flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:bg-bg hover:text-text"
                 >
                   <X className="h-3.5 w-3.5" />
-                  Clear
+                  Clear all
                 </button>
               )}
+            </div>
+
+            <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+              <LabeledFilterSelect
+                id="filter-opportunity"
+                label="Opportunity type"
+                value={opportunity}
+                onChange={(v) => commitFilters({ opportunity: v })}
+              >
+                <option value="">Any</option>
+                {opportunityOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </LabeledFilterSelect>
+
+              <LabeledFilterSelect
+                id="filter-department"
+                label="Department"
+                value={department}
+                onChange={(v) => commitFilters({ department: v })}
+              >
+                <option value="">Any department</option>
+                {departments.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </LabeledFilterSelect>
+
+              <LabeledFilterSelect
+                id="filter-lab"
+                label="Lab / group"
+                value={lab}
+                onChange={(v) => commitFilters({ lab: v })}
+              >
+                <option value="">Any lab</option>
+                {labs.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </LabeledFilterSelect>
+
+              <LabeledFilterSelect
+                id="filter-pay"
+                label="Pay or credit"
+                value={pay}
+                onChange={(v) => commitFilters({ pay: v })}
+              >
+                <option value="">Any</option>
+                {payOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </LabeledFilterSelect>
             </div>
           </div>
         )}

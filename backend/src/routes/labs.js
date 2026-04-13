@@ -4,19 +4,41 @@ import { getLabsCollection } from '../db.js';
 
 const router = Router();
 
+/**
+ * Tags that should filter the same labs (exact string in `research_areas` arrays).
+ * Case-insensitive on the request value so ?research_area=ai still works.
+ */
+const RESEARCH_AREA_SYNONYM_GROUPS = [
+  ['AI', 'artificial intelligence'],
+  ['ML', 'machine learning'],
+];
+
+function researchAreasMatchCondition(value) {
+  const v = value.trim();
+  const lower = v.toLowerCase();
+  for (const group of RESEARCH_AREA_SYNONYM_GROUPS) {
+    if (group.some((g) => g.toLowerCase() === lower)) {
+      return { research_areas: { $in: group } };
+    }
+  }
+  return { research_areas: v };
+}
+
 router.get('/filters', async (_req, res) => {
   try {
     const collection = await getLabsCollection();
 
-    const [parentOrgs, researchAreas] = await Promise.all([
+    const [parentOrgs, researchAreas, departments] = await Promise.all([
       collection.distinct('parent_org', { is_active: true, parent_org: { $nin: [null, ''] } }),
       collection.distinct('research_areas', { is_active: true }),
+      collection.distinct('department', { is_active: true, department: { $nin: [null, ''] } }),
     ]);
 
     parentOrgs.sort((a, b) => a.localeCompare(b));
     researchAreas.sort((a, b) => a.localeCompare(b));
+    departments.sort((a, b) => a.localeCompare(b));
 
-    res.json({ parentOrgs, researchAreas });
+    res.json({ parentOrgs, researchAreas, departments });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch lab filters', details: error.message });
   }
@@ -61,7 +83,7 @@ router.get('/', async (req, res) => {
     }
 
     if (research_area) {
-      query.research_areas = research_area;
+      Object.assign(query, researchAreasMatchCondition(research_area));
     }
 
     const [total, labs] = await Promise.all([
