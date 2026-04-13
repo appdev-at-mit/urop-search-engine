@@ -19,6 +19,14 @@ dist
 dist-ssr
 *.local
 *.db
+*.db-shm
+*.db-wal
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
 
 # Editor directories and files
 .vscode/*
