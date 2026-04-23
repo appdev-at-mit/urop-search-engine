@@ -11,12 +11,17 @@ Ranking strategy (3 steps):
 
 from pathlib import Path
 import argparse
+import argparse
 import json
+import os
+import re
+import sys
 import os
 import re
 import sys
 
 import pdfplumber
+from pymongo import MongoClient
 from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -28,13 +33,11 @@ VERBOSE = False
 
 def _log(*args, **kwargs):
     if VERBOSE:
-        print(*args, **kwargs)
+        print(*args, file=sys.stderr, **kwargs)
 
 
 # ---------------------------------------------------------------------------
-# Department → major mapping
-# Add / edit entries here to cover more MIT departments.
-# Each department string (lowercased, partial match) maps to a set of majors.
+# Department -> major mapping
 # ---------------------------------------------------------------------------
 DEPARTMENT_TO_MAJORS: dict[str, list[str]] = {
     # Computer Science / EECS
@@ -131,7 +134,6 @@ DEPARTMENT_TO_MAJORS: dict[str, list[str]] = {
 
 
 def _extract_text_from_pdf(resume_path: str) -> str:
-    """Extract and normalize all text from a PDF resume."""
     path = Path(resume_path)
     if not path.exists():
         raise FileNotFoundError(f"Resume PDF not found: {resume_path}")
@@ -143,31 +145,22 @@ def _extract_text_from_pdf(resume_path: str) -> str:
         raw = "\n".join(parts)
     except Exception as e:
         raise ValueError(f"Invalid or unreadable PDF: {resume_path}") from e
-    return "\n".join(raw.splitlines())  # preserve line breaks for section detection
+    return "\n".join(raw.splitlines())
 
 
 def _extract_education_section(resume_text: str) -> str:
-    """
-    Pull out just the EDUCATION section from the resume text.
-    Looks for a header line containing 'education' and reads until
-    the next all-caps / title-case section header.
-    """
     lines = resume_text.splitlines()
     in_education = False
     education_lines = []
 
     for line in lines:
         stripped = line.strip()
-
-        # Detect the EDUCATION header
         if re.match(r'^(EDUCATION|Education)[\s:]*$', stripped):
             in_education = True
             continue
-
         if in_education:
             if stripped:
                 education_lines.append(stripped)
-            # Stop after the first 2 non-empty lines
             if len(education_lines) >= 2:
                 break
 
@@ -175,15 +168,6 @@ def _extract_education_section(resume_text: str) -> str:
 
 
 def _extract_major_from_resume(resume_path: str) -> str:
-    """
-    Step 1: Extract the student's major from the EDUCATION section of the resume.
-
-    Strategy:
-    - Isolate the EDUCATION section.
-    - Search for explicit labels (Major, Field of Study, Concentration, B.S./B.A. in X).
-    - Fall back to scanning for known major names in that section.
-    Returns a lowercase major string, e.g. 'computer science'.
-    """
     resume_text = _extract_text_from_pdf(resume_path)
     education_text = _extract_education_section(resume_text)
 
@@ -191,9 +175,6 @@ def _extract_major_from_resume(resume_path: str) -> str:
 
     search_text = (education_text if education_text else resume_text).lower()
 
-    # Strategy 1: match known majors directly against the education text.
-    # Longest match first so "computer science" beats plain "science".
-    # Word-boundary matching prevents "science" from matching inside "computer science".
     all_known_majors = sorted(
         {m for majors in DEPARTMENT_TO_MAJORS.values() for m in majors},
         key=len, reverse=True
@@ -203,11 +184,8 @@ def _extract_major_from_resume(resume_path: str) -> str:
             _log(f"[DEBUG] Major detected via known-major scan: '{major}'")
             return major
 
-    # Strategy 2: fallback regex for majors not in the lookup table
     label_patterns = [
-        # "Bachelor/Master of Science/Arts/Engineering in X" — skips the degree-type word
         r'(?:Bachelor|Master)\s+of\s+(?:Science|Arts|Engineering)\s+in\s+([A-Za-z &/]{3,60})',
-        # "B.S. in X" / "S.B. in X"
         r'(?:B\.?S\.?|B\.?A\.?|M\.?S\.?|M\.?Eng\.?|S\.B\.)\s+in\s+([A-Za-z &/]{3,60})',
         r'Major[:\s]+([A-Za-z &/]{3,60})',
         r'Concentration[:\s]+([A-Za-z &/]{3,60})',
@@ -226,6 +204,78 @@ def _extract_major_from_resume(resume_path: str) -> str:
 
     _log("[DEBUG] Could not detect major from resume.")
     return ""
+
+
+def _load_env_file(env_path: Path) -> dict[str, str]:
+    vars = {}
+    if not env_path.exists():
+        return vars
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        vars[key.strip()] = value.strip()
+    return vars
+
+
+def _load_projects_from_mongodb(
+    mongo_uri: str,
+    db_name: str = "urop_search_engine",
+    collection_name: str = "listings",
+    limit: int | None = None,
+) -> list[dict]:
+    client = MongoClient(mongo_uri)
+    try:
+        db = client[db_name]
+        cursor = db[collection_name].find({"is_active": True}, {"_id": False})
+        if limit is not None:
+            cursor = cursor.limit(limit)
+        docs = list(cursor)
+        # Convert non-serializable types (e.g. datetime) to strings
+        for doc in docs:
+            for k, v in doc.items():
+                if hasattr(v, 'isoformat'):
+                    doc[k] = v.isoformat()
+        return docs
+    finally:
+        client.close()
+
+
+def _load_env_file(env_path: Path) -> dict[str, str]:
+    vars = {}
+    if not env_path.exists():
+        return vars
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        vars[key.strip()] = value.strip()
+    return vars
+
+
+def _load_projects_from_mongodb(
+    mongo_uri: str,
+    db_name: str = "urop_search_engine",
+    collection_name: str = "listings",
+    limit: int | None = None,
+) -> list[dict]:
+    client = MongoClient(mongo_uri)
+    try:
+        db = client[db_name]
+        cursor = db[collection_name].find({"is_active": True}, {"_id": False})
+        if limit is not None:
+            cursor = cursor.limit(limit)
+        docs = list(cursor)
+        # Convert non-serializable types (e.g. datetime) to strings
+        for doc in docs:
+            for k, v in doc.items():
+                if hasattr(v, 'isoformat'):
+                    doc[k] = v.isoformat()
+        return docs
+    finally:
+        client.close()
 
 
 def _load_env_file(env_path: Path) -> dict[str, str]:
@@ -266,11 +316,6 @@ def _load_projects_from_mongodb(
         client.close()
 
 def _classify_department(department: str) -> list[str]:
-    """
-    Step 2: Map a project's department string to a list of majors.
-    Uses partial substring matching against DEPARTMENT_TO_MAJORS keys.
-    Returns a list of matching major strings (may be empty).
-    """
     dept_lower = department.lower()
     matched_majors = set()
     for keyword, majors in DEPARTMENT_TO_MAJORS.items():
@@ -325,32 +370,18 @@ def find_most_relevant_LSA(
     projects: list[dict],
     top_k: int = 10,
     project_text_keys: tuple = ("department", "title", "description", "requirements", "professor", "lab", "keywords"),
+    project_text_keys: tuple = ("department", "title", "description", "requirements", "professor", "lab", "keywords"),
     show_lsa_plots: bool = False,
 ) -> tuple[list[dict], np.ndarray]:
-    """
-    Rank UROPs by relevance to the student's resume major.
-
-    Step 1 — Extract major from the EDUCATION section of the resume.
-    Step 2 — Classify each project's department into majors.
-    Step 3 — Projects matching the student's major come first (sorted by
-              TF-IDF/LSA score within that group); non-matching projects follow.
-
-    Returns:
-        (results, full_index_order)
-        results: top_k project dicts, each with an added 'score' and 'major_match' field.
-    """
     if not projects:
         return [], np.array([])
 
-    # ---- Step 1: identify major ----
     resume_major = _extract_major_from_resume(resume_path)
     _log(f"[INFO] Student major: '{resume_major}'")
 
-    # ---- Step 2: classify each project ----
     for p in projects:
         p["_majors"] = _classify_department(p.get("department", ""))
 
-    # ---- TF-IDF + LSA for within-group ordering ----
     resume_text = _extract_text_from_pdf(resume_path)
     project_texts = [_project_to_text(p, project_text_keys) for p in projects]
     all_docs = [resume_text] + project_texts
@@ -373,14 +404,14 @@ def find_most_relevant_LSA(
     else:
         cumulative = np.cumsum(svd.explained_variance_ratio_)
         _log(f"[INFO] Cumulative explained variance ({n_components} components): {cumulative[-1]:.3f}")
+        _log(f"[INFO] Cumulative explained variance ({n_components} components): {cumulative[-1]:.3f}")
 
     resume_vec = X_semantic[0:1]
     project_matrix = X_semantic[1:]
     similarities = cosine_similarity(resume_vec, project_matrix).ravel()
 
-    # ---- Step 3: split into matching vs non-matching, sort each by LSA score ----
-    matching     = []  # department maps to student's major
-    nonmatching  = []  # everything else
+    matching     = []
+    nonmatching  = []
 
     for i, project in enumerate(projects):
         entry = (i, float(similarities[i]))
@@ -402,7 +433,6 @@ def find_most_relevant_LSA(
         item["major_match"] = resume_major in item.pop("_majors", [])
         result.append(item)
 
-    # Clean up temp field from original list
     for p in projects:
         p.pop("_majors", None)
 
@@ -423,7 +453,25 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description='Rank scraped MongoDB UROPs by resume relevance.')
+    parser.add_argument('--resume-path', type=str, required=True, help='Path to the PDF resume file.')
+    parser.add_argument('--top-k', type=int, default=10, help='Number of top results to return.')
+    parser.add_argument('--mongo-uri', type=str, default=None, help='MongoDB URI (overrides env/MONGODB_URI).')
+    parser.add_argument('--db-name', type=str, default='urop_search_engine', help='MongoDB database name.')
+    parser.add_argument('--collection-name', type=str, default='listings', help='MongoDB collection name.')
+    parser.add_argument('--limit', type=int, default=None, help='Maximum number of listings to load from MongoDB.')
+    parser.add_argument('--json', dest='json_output', action='store_true', help='Output results as JSON.')
+    parser.add_argument('--show-plots', action='store_true', help='Plot LSA diagnostics.')
+    parser.add_argument('--verbose', action='store_true', help='Print verbose debug logs.')
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = _parse_args()
+
+    VERBOSE = args.verbose
+
     args = _parse_args()
 
     VERBOSE = args.verbose
@@ -452,3 +500,28 @@ if __name__ == "__main__":
         for r in results:
             match_flag = "✓" if r["major_match"] else " "
             print(f"[{match_flag}] {r['score']:.4f}  {r['department']:<40}  {r['title']}")
+    project_root = base_dir.parent
+    env_vars = _load_env_file(project_root / ".env")
+    mongo_uri = args.mongo_uri or os.environ.get("MONGODB_URI") or env_vars.get("MONGODB_URI")
+    if not mongo_uri:
+        raise RuntimeError(
+            "MONGODB_URI is required. Set it in the environment or in the project root .env file."
+        )
+
+    db_name = args.db_name or os.environ.get("MONGODB_DB_NAME") or env_vars.get("MONGODB_DB_NAME", "urop_search_engine")
+    projects = _load_projects_from_mongodb(
+        mongo_uri,
+        db_name=db_name,
+        collection_name=args.collection_name,
+        limit=args.limit,
+    )
+
+    results, indices = find_most_relevant_LSA(str(args.resume_path), projects, top_k=args.top_k, show_lsa_plots=args.show_plots)
+
+    if args.json_output:
+        sys.stdout.reconfigure(encoding='utf-8')
+        json.dump(results, sys.stdout, indent=2)
+    else:
+        for r in results:
+            match_flag = "Y" if r["major_match"] else " "
+            print(f"[{match_flag}] {r['score']:.4f}  {r.get('department', ''):<40}  {r.get('title', '')}")

@@ -59,5 +59,10 @@ export async function fetchLab(id: string): Promise<Lab> {
 export async function fetchLabFilters(): Promise<LabFilterOptions> {
   const res = await fetch(`${API_BASE}/labs/filters`);
   if (!res.ok) throw new Error('Failed to fetch lab filters');
-  return res.json();
+  const data = await res.json();
+  return {
+    parentOrgs: data.parentOrgs ?? [],
+    researchAreas: data.researchAreas ?? [],
+    departments: data.departments ?? [],
+  };
 }

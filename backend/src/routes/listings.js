@@ -181,6 +181,45 @@ router.get('/labs', async (_req, res) => {
   }
 });
 
+router.post('/rank/resume', async (req, res) => {
+  const { resumePath, top_k = 10 } = req.body;
+  if (!resumePath || typeof resumePath !== 'string') {
+    return res.status(400).json({ error: 'resumePath is required in request body' });
+  }
+
+  const topK = Math.min(50, Math.max(1, Number(top_k) || 10));
+  const args = [RELEVANCE_SCRIPT, '--resume-path', resumePath, '--top-k', String(topK), '--json'];
+  const ranker = spawn(PYTHON_EXECUTABLE, args, {
+    cwd: ROOT_DIR,
+    env: { ...process.env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' },
+  });
+
+  let stdout = '';
+  let stderr = '';
+
+  ranker.stdout.on('data', (chunk) => { stdout += chunk.toString(); });
+  ranker.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+  ranker.on('error', (error) => {
+    res.status(500).json({ error: 'Failed to start resume ranker', details: error.message });
+  });
+  ranker.on('close', (code) => {
+    if (code !== 0) {
+      return res.status(500).json({ error: 'Resume ranker failed', details: stderr || `exit code ${code}` });
+    }
+    try {
+      // Strip any non-JSON lines before the JSON array
+      const jsonStart = stdout.indexOf('[');
+      if (jsonStart === -1) {
+        return res.status(500).json({ error: 'No JSON found in ranker output', stdout, stderr });
+      }
+      const jsonStr = stdout.slice(jsonStart);
+      res.json({ results: JSON.parse(jsonStr) });
+    } catch (e) {
+      res.status(500).json({ error: 'Invalid JSON returned from resume ranker', details: e.message, stdout, stderr });
+    }
+  });
+});
+
 router.get('/:id', async (req, res) => {
   try {
     if (!ObjectId.isValid(req.params.id)) {

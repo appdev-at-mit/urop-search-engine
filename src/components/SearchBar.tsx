@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Search, ArrowRight, X } from 'lucide-react'
-import Dropdown from './Dropdown'
-import type { DropdownOption } from './Dropdown'
+import { Search, ArrowRight, Filter, X } from 'lucide-react'
+import LabeledFilterSelect from './LabeledFilterSelect'
 
 export type SearchFilters = {
   department?: string
@@ -23,16 +22,16 @@ interface SearchBarProps {
   initialLab?: string
 }
 
-const payOptions: DropdownOption[] = [
+const payOptions: { value: string; label: string }[] = [
   { value: 'Pay', label: 'Pay' },
   { value: 'Credit', label: 'Credit' },
   { value: 'Both', label: 'Both' },
 ]
 
-const opportunityOptions: DropdownOption[] = [
+const opportunityOptions: { value: string; label: string }[] = [
   { value: 'urop', label: 'UROP' },
-  { value: 'global', label: 'Global' },
-  { value: 'not_urop', label: 'Not UROP' },
+  { value: 'global', label: 'Global opportunities' },
+  { value: 'not_urop', label: 'Research (not UROP)' },
 ]
 
 export default function SearchBar({
@@ -56,6 +55,21 @@ export default function SearchBar({
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     onSearch(query.trim(), { department, pay, opportunity, lab })
+  }
+
+  /** Apply filter fields and sync URL/results immediately (Airtable-style). */
+  function commitFilters(overrides: Partial<SearchFilters>) {
+    const next: SearchFilters = {
+      department: overrides.department !== undefined ? overrides.department : department,
+      pay: overrides.pay !== undefined ? overrides.pay : pay,
+      opportunity: overrides.opportunity !== undefined ? overrides.opportunity : opportunity,
+      lab: overrides.lab !== undefined ? overrides.lab : lab,
+    }
+    if (overrides.department !== undefined) setDepartment(next.department ?? '')
+    if (overrides.pay !== undefined) setPay(next.pay ?? '')
+    if (overrides.opportunity !== undefined) setOpportunity(next.opportunity ?? '')
+    if (overrides.lab !== undefined) setLab(next.lab ?? '')
+    onSearch(query.trim(), next)
   }
 
   const showFilters = large && departments
@@ -94,50 +108,82 @@ export default function SearchBar({
         </div>
 
         {showFilters && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-border/60 px-7 py-3.5">
-            <Dropdown
-              value={opportunity}
-              onChange={setOpportunity}
-              options={opportunityOptions}
-              placeholder="All Types"
-            />
+          <div className="border-t border-border/60 px-7 py-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-text-secondary">
+                <Filter className="h-4 w-4 shrink-0 text-text-tertiary" aria-hidden />
+                <span className="text-sm font-medium text-text">Filters</span>
+                <span className="text-xs text-text-tertiary">narrow results by field</span>
+              </div>
+              {hasFilters && (
+                <button
+                  type="button"
+                  onClick={() => commitFilters({ department: '', pay: '', opportunity: '', lab: '' })}
+                  className="flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:bg-bg hover:text-text"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Clear all
+                </button>
+              )}
+            </div>
 
-            <Dropdown
-              value={department}
-              onChange={setDepartment}
-              options={departments.map((d) => ({ value: d, label: d }))}
-              placeholder="All Departments"
-            />
-
-            <Dropdown
-              value={lab}
-              onChange={setLab}
-              options={labs.map((l) => ({ value: l, label: l }))}
-              placeholder="All Labs"
-            />
-
-            <Dropdown
-              value={pay}
-              onChange={setPay}
-              options={payOptions}
-              placeholder="Compensation"
-            />
-
-            {hasFilters && (
-              <button
-                type="button"
-                onClick={() => {
-                  setDepartment('')
-                  setPay('')
-                  setOpportunity('')
-                  setLab('')
-                }}
-                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:text-text"
+            <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+              <LabeledFilterSelect
+                id="filter-opportunity"
+                label="Opportunity type"
+                value={opportunity}
+                onChange={(v) => commitFilters({ opportunity: v })}
               >
-                <X className="h-3.5 w-3.5" />
-                Clear
-              </button>
-            )}
+                <option value="">Any</option>
+                {opportunityOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </LabeledFilterSelect>
+
+              <LabeledFilterSelect
+                id="filter-department"
+                label="Department"
+                value={department}
+                onChange={(v) => commitFilters({ department: v })}
+              >
+                <option value="">Any department</option>
+                {departments.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </LabeledFilterSelect>
+
+              <LabeledFilterSelect
+                id="filter-lab"
+                label="Lab / group"
+                value={lab}
+                onChange={(v) => commitFilters({ lab: v })}
+              >
+                <option value="">Any lab</option>
+                {labs.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </LabeledFilterSelect>
+
+              <LabeledFilterSelect
+                id="filter-pay"
+                label="Pay or credit"
+                value={pay}
+                onChange={(v) => commitFilters({ pay: v })}
+              >
+                <option value="">Any</option>
+                {payOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </LabeledFilterSelect>
+            </div>
           </div>
         )}
       </div>

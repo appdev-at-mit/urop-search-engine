@@ -1,23 +1,26 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Search, ArrowRight, X, Loader2 } from 'lucide-react'
-import Dropdown from '../components/Dropdown'
+import { Search, ArrowRight, X, Loader2, Filter } from 'lucide-react'
 import LabCard from '../components/LabCard'
 import Pagination from '../components/Pagination'
+import LabeledFilterSelect from '../components/LabeledFilterSelect'
 import { fetchLabs, fetchLabFilters } from '../lib/api'
 
 export default function LabsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const q = searchParams.get('q') ?? ''
+  const department = searchParams.get('department') ?? ''
   const parent_org = searchParams.get('parent_org') ?? ''
   const research_area = searchParams.get('research_area') ?? ''
   const page = parseInt(searchParams.get('page') ?? '1', 10)
 
   const [query, setQuery] = useState(q)
-  const [orgFilter, setOrgFilter] = useState(parent_org)
-  const [areaFilter, setAreaFilter] = useState(research_area)
+
+  useEffect(() => {
+    setQuery(q)
+  }, [q])
 
   const { data: filterOptions } = useQuery({
     queryKey: ['labFilters'],
@@ -25,17 +28,43 @@ export default function LabsPage() {
   })
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['labs', q, parent_org, research_area, page],
-    queryFn: () => fetchLabs({ q, parent_org, research_area, page }),
+    queryKey: ['labs', q, department, parent_org, research_area, page],
+    queryFn: () => fetchLabs({ q, department, parent_org, research_area, page }),
   })
 
   function handleSearch(e: FormEvent) {
     e.preventDefault()
-    const next = new URLSearchParams()
-    if (query.trim()) next.set('q', query.trim())
-    if (orgFilter) next.set('parent_org', orgFilter)
-    if (areaFilter) next.set('research_area', areaFilter)
+    const next = new URLSearchParams(searchParams)
+    if (query.trim()) {
+      next.set('q', query.trim())
+    } else {
+      next.delete('q')
+    }
+    next.delete('page')
     setSearchParams(next)
+  }
+
+  function commitFilters(
+    overrides: Partial<{ department: string; parent_org: string; research_area: string }>,
+  ) {
+    const next = new URLSearchParams(searchParams)
+    const dept = overrides.department !== undefined ? overrides.department : department
+    const org = overrides.parent_org !== undefined ? overrides.parent_org : parent_org
+    const area = overrides.research_area !== undefined ? overrides.research_area : research_area
+
+    if (dept) next.set('department', dept)
+    else next.delete('department')
+    if (org) next.set('parent_org', org)
+    else next.delete('parent_org')
+    if (area) next.set('research_area', area)
+    else next.delete('research_area')
+    next.delete('page')
+    setSearchParams(next)
+  }
+
+  function clearFilters() {
+    setQuery('')
+    setSearchParams({})
   }
 
   function updatePage(p: number) {
@@ -44,7 +73,11 @@ export default function LabsPage() {
     setSearchParams(next)
   }
 
-  const hasFilters = orgFilter || areaFilter
+  const hasFilters = q || department || parent_org || research_area
+
+  const parentOrgs = filterOptions?.parentOrgs ?? []
+  const researchAreas = filterOptions?.researchAreas ?? []
+  const departments = filterOptions?.departments ?? []
 
   return (
     <main className="mx-auto max-w-7xl px-8 py-12">
@@ -58,7 +91,11 @@ export default function LabsPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSearch} className="relative z-10 animate-fade-in-up mb-8" style={{ animationDelay: '100ms' }}>
+      <form
+        onSubmit={handleSearch}
+        className="animate-fade-in-up mb-8 w-full"
+        style={{ animationDelay: '100ms' }}
+      >
         <div className="group rounded-2xl bg-surface shadow-sm transition-all focus-within:shadow-md">
           <div className="flex items-center gap-3 px-7 py-5">
             <Search className="h-6 w-6 shrink-0 text-text-tertiary" />
@@ -79,34 +116,68 @@ export default function LabsPage() {
           </div>
 
           {filterOptions && (
-            <div className="flex flex-wrap items-center gap-2 border-t border-border/60 px-7 py-3.5">
-              <Dropdown
-                value={orgFilter}
-                onChange={setOrgFilter}
-                options={filterOptions.parentOrgs.map((o) => ({ value: o, label: o }))}
-                placeholder="All Centers"
-              />
+            <div className="border-t border-border/60 px-7 py-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-text-secondary">
+                  <Filter className="h-4 w-4 shrink-0 text-text-tertiary" aria-hidden />
+                  <span className="text-sm font-medium text-text">Filters</span>
+                  <span className="text-xs text-text-tertiary">narrow results by field</span>
+                </div>
+                {hasFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:bg-bg hover:text-text"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Clear all
+                  </button>
+                )}
+              </div>
 
-              <Dropdown
-                value={areaFilter}
-                onChange={setAreaFilter}
-                options={filterOptions.researchAreas.map((a) => ({ value: a, label: a }))}
-                placeholder="All Research Areas"
-              />
-
-              {hasFilters && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrgFilter('')
-                    setAreaFilter('')
-                  }}
-                  className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:text-text"
+              <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+                <LabeledFilterSelect
+                  id="lab-filter-department"
+                  label="Department"
+                  value={department}
+                  onChange={(v) => commitFilters({ department: v })}
                 >
-                  <X className="h-3.5 w-3.5" />
-                  Clear
-                </button>
-              )}
+                  <option value="">Any department</option>
+                  {departments.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </LabeledFilterSelect>
+
+                <LabeledFilterSelect
+                  id="lab-filter-center"
+                  label="Center"
+                  value={parent_org}
+                  onChange={(v) => commitFilters({ parent_org: v })}
+                >
+                  <option value="">Any</option>
+                  {parentOrgs.map((org) => (
+                    <option key={org} value={org}>
+                      {org}
+                    </option>
+                  ))}
+                </LabeledFilterSelect>
+
+                <LabeledFilterSelect
+                  id="lab-filter-area"
+                  label="Research area"
+                  value={research_area}
+                  onChange={(v) => commitFilters({ research_area: v })}
+                >
+                  <option value="">Any area</option>
+                  {researchAreas.map((area) => (
+                    <option key={area} value={area}>
+                      {area}
+                    </option>
+                  ))}
+                </LabeledFilterSelect>
+              </div>
             </div>
           )}
         </div>
@@ -121,16 +192,22 @@ export default function LabsPage() {
               for <span className="font-medium text-text">"{q}"</span>
             </>
           )}
+          {department && (
+            <>
+              {' '}
+              in <span className="font-medium text-text">{department}</span>
+            </>
+          )}
           {parent_org && (
             <>
               {' '}
-              in <span className="font-medium text-text">{parent_org}</span>
+              · <span className="font-medium text-text">{parent_org}</span>
             </>
           )}
           {research_area && (
             <>
               {' '}
-              working on <span className="font-medium text-text">{research_area}</span>
+              · <span className="font-medium text-text">{research_area}</span>
             </>
           )}
         </p>
