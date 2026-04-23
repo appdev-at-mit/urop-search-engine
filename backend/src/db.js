@@ -50,6 +50,11 @@ export async function getLabsCollection() {
   return db.collection(LABS_COLLECTION_NAME);
 }
 
+export async function getDb() {
+  return connectToDatabase();
+}
+
+
 export async function closeDatabaseConnection() {
   if (!client) {
     return;
