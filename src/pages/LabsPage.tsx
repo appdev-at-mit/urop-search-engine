@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Search, ArrowRight, X, Loader2 } from 'lucide-react'
+import Dropdown from '../components/Dropdown'
 import LabCard from '../components/LabCard'
 import Pagination from '../components/Pagination'
 import { fetchLabs, fetchLabFilters } from '../lib/api'
@@ -15,6 +16,8 @@ export default function LabsPage() {
   const page = parseInt(searchParams.get('page') ?? '1', 10)
 
   const [query, setQuery] = useState(q)
+  const [orgFilter, setOrgFilter] = useState(parent_org)
+  const [areaFilter, setAreaFilter] = useState(research_area)
 
   const { data: filterOptions } = useQuery({
     queryKey: ['labFilters'],
@@ -28,30 +31,11 @@ export default function LabsPage() {
 
   function handleSearch(e: FormEvent) {
     e.preventDefault()
-    const next = new URLSearchParams(searchParams)
-    if (query.trim()) {
-      next.set('q', query.trim())
-    } else {
-      next.delete('q')
-    }
-    next.delete('page')
+    const next = new URLSearchParams()
+    if (query.trim()) next.set('q', query.trim())
+    if (orgFilter) next.set('parent_org', orgFilter)
+    if (areaFilter) next.set('research_area', areaFilter)
     setSearchParams(next)
-  }
-
-  function setFilter(key: string, value: string) {
-    const next = new URLSearchParams(searchParams)
-    if (value) {
-      next.set(key, value)
-    } else {
-      next.delete(key)
-    }
-    next.delete('page')
-    setSearchParams(next)
-  }
-
-  function clearFilters() {
-    setQuery('')
-    setSearchParams({})
   }
 
   function updatePage(p: number) {
@@ -60,7 +44,7 @@ export default function LabsPage() {
     setSearchParams(next)
   }
 
-  const hasFilters = q || parent_org || research_area
+  const hasFilters = orgFilter || areaFilter
 
   return (
     <main className="mx-auto max-w-7xl px-8 py-12">
@@ -74,7 +58,7 @@ export default function LabsPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSearch} className="animate-fade-in-up mb-6" style={{ animationDelay: '100ms' }}>
+      <form onSubmit={handleSearch} className="relative z-10 animate-fade-in-up mb-8" style={{ animationDelay: '100ms' }}>
         <div className="group rounded-2xl bg-surface shadow-sm transition-all focus-within:shadow-md">
           <div className="flex items-center gap-3 px-7 py-5">
             <Search className="h-6 w-6 shrink-0 text-text-tertiary" />
@@ -93,61 +77,40 @@ export default function LabsPage() {
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
+
+          {filterOptions && (
+            <div className="flex flex-wrap items-center gap-2 border-t border-border/60 px-7 py-3.5">
+              <Dropdown
+                value={orgFilter}
+                onChange={setOrgFilter}
+                options={filterOptions.parentOrgs.map((o) => ({ value: o, label: o }))}
+                placeholder="All Centers"
+              />
+
+              <Dropdown
+                value={areaFilter}
+                onChange={setAreaFilter}
+                options={filterOptions.researchAreas.map((a) => ({ value: a, label: a }))}
+                placeholder="All Research Areas"
+              />
+
+              {hasFilters && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrgFilter('')
+                    setAreaFilter('')
+                  }}
+                  className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:text-text"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </form>
-
-      {filterOptions && (
-        <div className="animate-fade-in-up mb-6 flex flex-wrap items-center gap-2" style={{ animationDelay: '150ms' }}>
-          <span className="text-xs font-medium text-text-tertiary">Center:</span>
-          {filterOptions.parentOrgs.map((org) => (
-            <button
-              key={org}
-              onClick={() => setFilter('parent_org', parent_org === org ? '' : org)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-all active:scale-[0.97] ${
-                parent_org === org
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-border bg-surface text-text-secondary hover:border-primary/40 hover:text-primary'
-              }`}
-            >
-              {org}
-            </button>
-          ))}
-
-          {hasFilters && (
-            <button
-              onClick={clearFilters}
-              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-text-tertiary transition-colors hover:text-text"
-            >
-              <X className="h-3.5 w-3.5" />
-              Clear all
-            </button>
-          )}
-        </div>
-      )}
-
-      {filterOptions && filterOptions.researchAreas.length > 0 && (
-        <div className="animate-fade-in-up mb-8 flex flex-wrap items-center gap-1.5" style={{ animationDelay: '200ms' }}>
-          <span className="mr-1 text-xs font-medium text-text-tertiary">Areas:</span>
-          {filterOptions.researchAreas.slice(0, 20).map((area) => (
-            <button
-              key={area}
-              onClick={() => setFilter('research_area', research_area === area ? '' : area)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-all active:scale-[0.97] ${
-                research_area === area
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-border bg-bg text-text-secondary hover:border-primary/40 hover:text-primary'
-              }`}
-            >
-              {area}
-            </button>
-          ))}
-          {filterOptions.researchAreas.length > 20 && (
-            <span className="text-xs text-text-tertiary">
-              +{filterOptions.researchAreas.length - 20} more
-            </span>
-          )}
-        </div>
-      )}
 
       {data && (
         <p className="mb-5 text-sm text-text-tertiary">

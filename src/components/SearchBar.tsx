@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { Search, ArrowRight, ChevronDown, X } from 'lucide-react'
+import { Search, ArrowRight, X } from 'lucide-react'
+import Dropdown from './Dropdown'
+import type { DropdownOption } from './Dropdown'
 
 export type SearchFilters = {
   department?: string
@@ -21,9 +23,13 @@ interface SearchBarProps {
   initialLab?: string
 }
 
-const payOptions = ['Pay', 'Credit', 'Both']
+const payOptions: DropdownOption[] = [
+  { value: 'Pay', label: 'Pay' },
+  { value: 'Credit', label: 'Credit' },
+  { value: 'Both', label: 'Both' },
+]
 
-const opportunityOptions: { value: string; label: string }[] = [
+const opportunityOptions: DropdownOption[] = [
   { value: 'urop', label: 'UROP' },
   { value: 'global', label: 'Global' },
   { value: 'not_urop', label: 'Not UROP' },
@@ -88,92 +94,50 @@ export default function SearchBar({
         </div>
 
         {showFilters && (
-          <div className="flex flex-col gap-3 border-t border-border/60 px-7 py-3.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="mr-1 text-xs font-medium uppercase tracking-wide text-text-tertiary">
-                Type
-              </span>
-              {opportunityOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setOpportunity(opportunity === opt.value ? '' : opt.value)}
-                  className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all active:scale-[0.97] ${
-                    opportunity === opt.value
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-border bg-bg text-text-secondary hover:border-primary/40 hover:text-primary'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap items-center gap-2 border-t border-border/60 px-7 py-3.5">
+            <Dropdown
+              value={opportunity}
+              onChange={setOpportunity}
+              options={opportunityOptions}
+              placeholder="All Types"
+            />
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <select
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  className="appearance-none rounded-full border border-border bg-bg py-1.5 pl-3.5 pr-8 text-sm text-text-secondary outline-none transition-colors hover:border-primary/40 focus:border-primary/40"
-                >
-                  <option value="">All Departments</option>
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" />
-              </div>
+            <Dropdown
+              value={department}
+              onChange={setDepartment}
+              options={departments.map((d) => ({ value: d, label: d }))}
+              placeholder="All Departments"
+            />
 
-              <div className="relative min-w-[10rem] max-w-[min(100%,20rem)]">
-                <select
-                  value={lab}
-                  onChange={(e) => setLab(e.target.value)}
-                  className="max-w-full appearance-none rounded-full border border-border bg-bg py-1.5 pl-3.5 pr-8 text-sm text-text-secondary outline-none transition-colors hover:border-primary/40 focus:border-primary/40"
-                  title="Filter by lab"
-                >
-                  <option value="">All labs</option>
-                  {labs.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-tertiary" />
-              </div>
+            <Dropdown
+              value={lab}
+              onChange={setLab}
+              options={labs.map((l) => ({ value: l, label: l }))}
+              placeholder="All Labs"
+            />
 
-              {payOptions.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => setPay(pay === opt ? '' : opt)}
-                  className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all active:scale-[0.97] ${
-                    pay === opt
-                      ? 'border-primary bg-primary text-white'
-                      : 'border-border bg-bg text-text-secondary hover:border-primary/40 hover:text-primary'
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
+            <Dropdown
+              value={pay}
+              onChange={setPay}
+              options={payOptions}
+              placeholder="Compensation"
+            />
 
-              {hasFilters && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDepartment('')
-                    setPay('')
-                    setOpportunity('')
-                    setLab('')
-                  }}
-                  className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:text-text"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Clear
-                </button>
-              )}
-            </div>
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDepartment('')
+                  setPay('')
+                  setOpportunity('')
+                  setLab('')
+                }}
+                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:text-text"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </button>
+            )}
           </div>
         )}
       </div>

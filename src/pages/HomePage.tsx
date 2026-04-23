@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, Search, Building2, Sparkles } from 'lucide-react'
+import { ArrowRight, Search, Building2 } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
 import ListingCard from '../components/ListingCard'
 import { fetchListings, fetchDepartments, fetchListingLabs } from '../lib/api'
@@ -56,7 +56,7 @@ export default function HomePage() {
   return (
     <main>
       {/* Hero */}
-      <section className="px-8 pb-28 pt-36">
+      <section className="relative z-10 px-8 pb-28 pt-36">
         <div className="mx-auto max-w-4xl text-center">
           <div className="animate-fade-in-up">
             <p className="mb-4 text-sm font-medium text-text-tertiary">
@@ -92,11 +92,10 @@ export default function HomePage() {
       {/* Stats */}
       <section className="px-8 pb-20">
         <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             {[
               { icon: Search, label: 'Active Listings', value: stats.listings },
               { icon: Building2, label: 'Departments', value: stats.departments },
-              { icon: Sparkles, label: 'Full-Text Search', value: 'Instant' },
             ].map((stat, i) => (
               <div
                 key={stat.label}
