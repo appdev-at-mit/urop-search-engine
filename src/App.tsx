@@ -7,6 +7,7 @@ import LabsPage from './pages/LabsPage'
 import LabDetailPage from './pages/LabDetailPage'
 import AdminPage from './pages/AdminPage'
 import ResumeRanker from './pages/ResumeRanker'
+import ProfilePage from './pages/ProfilePage'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/labs/:id" element={<LabDetailPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/resume" element={<ResumeRanker />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </div>
   )
