@@ -115,8 +115,9 @@ export default function LabsPage() {
             </button>
           </div>
 
-          {filterOptions && (
-            <div className="border-t border-border/60 px-7 py-4">
+          <div className="border-t border-border/60 px-7 py-4">
+            {filterOptions && (
+              <>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-text-secondary">
                   <Filter className="h-4 w-4 shrink-0 text-text-tertiary" aria-hidden />
@@ -178,8 +179,9 @@ export default function LabsPage() {
                   ))}
                 </LabeledFilterSelect>
               </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </form>
 

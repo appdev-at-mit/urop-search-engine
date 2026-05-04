@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { Search, ArrowRight, Filter, X } from 'lucide-react'
 import LabeledFilterSelect from './LabeledFilterSelect'
 
@@ -51,6 +51,12 @@ export default function SearchBar({
   const [pay, setPay] = useState(initialPay)
   const [opportunity, setOpportunity] = useState(initialOpportunity)
   const [lab, setLab] = useState(initialLab)
+
+  useEffect(() => { setQuery(initialQuery) }, [initialQuery])
+  useEffect(() => { setDepartment(initialDepartment) }, [initialDepartment])
+  useEffect(() => { setPay(initialPay) }, [initialPay])
+  useEffect(() => { setOpportunity(initialOpportunity) }, [initialOpportunity])
+  useEffect(() => { setLab(initialLab) }, [initialLab])
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()

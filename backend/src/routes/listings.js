@@ -1,15 +1,7 @@
 import { Router } from 'express';
 import { ObjectId } from 'mongodb';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 import { getListingsCollection } from '../db.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const ROOT_DIR = resolve(__dirname, '..', '..', '..');
-const RELEVANCE_SCRIPT = resolve(ROOT_DIR, 'Relevance', 'relavence_TFIDF_LSA.py');
-const PYTHON_EXECUTABLE = process.env.PYTHON_PATH || process.env.PYTHON || 'python';
+import { getDb } from '../db.js';
 
 const router = Router();
 
@@ -89,77 +81,19 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/rank/resume', async (req, res) => {
-  const { resumePath, top_k = 10 } = req.body;
-  if (!resumePath || typeof resumePath !== 'string') {
-    return res.status(400).json({ error: 'resumePath is required in request body' });
-  }
-
-  const topK = Math.min(50, Math.max(1, Number(top_k) || 10));
-
-  try {
-    const args = [
-      RELEVANCE_SCRIPT,
-      '--resume-path',
-      resumePath,
-      '--top-k',
-      String(topK),
-      '--json',
-    ];
-
-    const ranker = spawn(PYTHON_EXECUTABLE, args, {
-      cwd: ROOT_DIR,
-      env: process.env,
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    ranker.stdout.on('data', (chunk) => {
-      stdout += chunk.toString();
-    });
-    ranker.stderr.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-
-    ranker.on('error', (error) => {
-      res.status(500).json({ error: 'Failed to start resume ranker', details: error.message });
-    });
-
-    ranker.on('close', (code) => {
-      if (code !== 0) {
-        return res.status(500).json({
-          error: 'Resume ranker failed',
-          details: stderr || `exit code ${code}`,
-        });
-      }
-
-      try {
-        const results = JSON.parse(stdout);
-        res.json({ results });
-      } catch (parseError) {
-        res.status(500).json({
-          error: 'Invalid JSON returned from resume ranker',
-          details: parseError.message,
-          stdout,
-          stderr,
-        });
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to rank listings', details: error.message });
-  }
-});
-
 router.get('/departments', async (_req, res) => {
   try {
     const listingsCollection = await getListingsCollection();
-    const departments = await listingsCollection.distinct('department', {
+    const raw = await listingsCollection.distinct('department', {
       is_active: true,
       department: { $nin: [null, ''] },
     });
 
-    departments.sort((a, b) => a.localeCompare(b));
+    const primarySet = new Set();
+    for (const d of raw) {
+      primarySet.add(d.includes('/') ? d.split('/')[0].trim() : d.trim());
+    }
+    const departments = [...primarySet].sort((a, b) => a.localeCompare(b));
     res.json(departments);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch departments', details: error.message });
@@ -181,43 +115,79 @@ router.get('/labs', async (_req, res) => {
   }
 });
 
-router.post('/rank/resume', async (req, res) => {
-  const { resumePath, top_k = 10 } = req.body;
-  if (!resumePath || typeof resumePath !== 'string') {
-    return res.status(400).json({ error: 'resumePath is required in request body' });
-  }
+router.get('/recommended', async (req, res) => {
+  const limit = Math.min(20, Math.max(1, Number.parseInt(req.query.limit, 10) || 6));
 
-  const topK = Math.min(50, Math.max(1, Number(top_k) || 10));
-  const args = [RELEVANCE_SCRIPT, '--resume-path', resumePath, '--top-k', String(topK), '--json'];
-  const ranker = spawn(PYTHON_EXECUTABLE, args, {
-    cwd: ROOT_DIR,
-    env: { ...process.env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' },
-  });
+  try {
+    const listingsCollection = await getListingsCollection();
 
-  let stdout = '';
-  let stderr = '';
-
-  ranker.stdout.on('data', (chunk) => { stdout += chunk.toString(); });
-  ranker.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
-  ranker.on('error', (error) => {
-    res.status(500).json({ error: 'Failed to start resume ranker', details: error.message });
-  });
-  ranker.on('close', (code) => {
-    if (code !== 0) {
-      return res.status(500).json({ error: 'Resume ranker failed', details: stderr || `exit code ${code}` });
+    if (!req.user) {
+      const listings = await listingsCollection
+        .find({ is_active: true })
+        .sort({ posted_date: -1 })
+        .limit(limit)
+        .toArray();
+      return res.json({ listings, personalized: false });
     }
-    try {
-      // Strip any non-JSON lines before the JSON array
-      const jsonStart = stdout.indexOf('[');
-      if (jsonStart === -1) {
-        return res.status(500).json({ error: 'No JSON found in ranker output', stdout, stderr });
+
+    const db = await getDb();
+    const user = await db.collection('users').findOne({ googleId: req.user.googleId });
+
+    const terms = [
+      ...(user?.interests || []),
+      ...(user?.skills || []),
+    ];
+    if (user?.major) terms.push(user.major);
+
+    const hasProfile = terms.length > 0;
+    if (!hasProfile) {
+      const listings = await listingsCollection
+        .find({ is_active: true })
+        .sort({ posted_date: -1 })
+        .limit(limit)
+        .toArray();
+      return res.json({ listings, personalized: false });
+    }
+
+    const regexPatterns = terms.map(t => ({
+      escaped: t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+      regex: new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+    }));
+
+    const orConditions = regexPatterns.flatMap(({ regex }) => [
+      { title: regex },
+      { description: regex },
+      { requirements: regex },
+      { department: regex },
+      { theme: regex },
+    ]);
+
+    const candidates = await listingsCollection
+      .find({ is_active: true, $or: orConditions })
+      .sort({ posted_date: -1 })
+      .limit(200)
+      .toArray();
+
+    const scored = candidates.map(listing => {
+      let score = 0;
+      const text = [listing.title, listing.description, listing.requirements, listing.department, listing.theme]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      for (const { regex } of regexPatterns) {
+        if (regex.test(text)) score++;
       }
-      const jsonStr = stdout.slice(jsonStart);
-      res.json({ results: JSON.parse(jsonStr) });
-    } catch (e) {
-      res.status(500).json({ error: 'Invalid JSON returned from resume ranker', details: e.message, stdout, stderr });
-    }
-  });
+      return { listing, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score || new Date(b.listing.posted_date ?? 0) - new Date(a.listing.posted_date ?? 0));
+
+    const listings = scored.slice(0, limit).map(s => s.listing);
+    res.json({ listings, personalized: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch recommended listings', details: error.message });
+  }
 });
 
 router.get('/:id', async (req, res) => {

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { ObjectId } from 'mongodb';
 import { getLabsCollection } from '../db.js';
+import { getDb } from '../db.js';
 
 const router = Router();
 
@@ -28,7 +29,7 @@ router.get('/filters', async (_req, res) => {
   try {
     const collection = await getLabsCollection();
 
-    const [parentOrgs, researchAreas, departments] = await Promise.all([
+    const [parentOrgs, researchAreas, rawDepts] = await Promise.all([
       collection.distinct('parent_org', { is_active: true, parent_org: { $nin: [null, ''] } }),
       collection.distinct('research_areas', { is_active: true }),
       collection.distinct('department', { is_active: true, department: { $nin: [null, ''] } }),
@@ -36,7 +37,12 @@ router.get('/filters', async (_req, res) => {
 
     parentOrgs.sort((a, b) => a.localeCompare(b));
     researchAreas.sort((a, b) => a.localeCompare(b));
-    departments.sort((a, b) => a.localeCompare(b));
+
+    const deptSet = new Set();
+    for (const d of rawDepts) {
+      deptSet.add(d.includes('/') ? d.split('/')[0].trim() : d.trim());
+    }
+    const departments = [...deptSet].sort((a, b) => a.localeCompare(b));
 
     res.json({ parentOrgs, researchAreas, departments });
   } catch (error) {
@@ -102,6 +108,79 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch labs', details: error.message });
+  }
+});
+
+router.get('/recommended', async (req, res) => {
+  const limit = Math.min(20, Math.max(1, Number.parseInt(req.query.limit, 10) || 6));
+
+  try {
+    const collection = await getLabsCollection();
+
+    if (!req.user) {
+      const labs = await collection
+        .find({ is_active: true })
+        .sort({ name: 1 })
+        .limit(limit)
+        .toArray();
+      return res.json({ labs, personalized: false });
+    }
+
+    const db = await getDb();
+    const user = await db.collection('users').findOne({ googleId: req.user.googleId });
+
+    const terms = [
+      ...(user?.interests || []),
+      ...(user?.skills || []),
+    ];
+    if (user?.major) terms.push(user.major);
+
+    const hasProfile = terms.length > 0;
+    if (!hasProfile) {
+      const labs = await collection
+        .find({ is_active: true })
+        .sort({ name: 1 })
+        .limit(limit)
+        .toArray();
+      return res.json({ labs, personalized: false });
+    }
+
+    const regexPatterns = terms.map(t => ({
+      regex: new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+    }));
+
+    const orConditions = regexPatterns.flatMap(({ regex }) => [
+      { name: regex },
+      { description: regex },
+      { research_areas: regex },
+      { department: regex },
+      { pi: regex },
+    ]);
+
+    const candidates = await collection
+      .find({ is_active: true, $or: orConditions })
+      .limit(200)
+      .toArray();
+
+    const scored = candidates.map(lab => {
+      let score = 0;
+      const text = [lab.name, lab.description, lab.department, lab.pi, ...(lab.research_areas || [])]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      for (const { regex } of regexPatterns) {
+        if (regex.test(text)) score++;
+      }
+      return { lab, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score || a.lab.name.localeCompare(b.lab.name));
+
+    const labs = scored.slice(0, limit).map(s => s.lab);
+    res.json({ labs, personalized: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch recommended labs', details: error.message });
   }
 });
 

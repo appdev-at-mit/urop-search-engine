@@ -1,4 +1,4 @@
-import type { Listing, ListingFilters, PaginatedResponse, Lab, LabFilters, PaginatedLabResponse, LabFilterOptions } from '../types';
+import type { Listing, ListingFilters, PaginatedResponse, Lab, LabFilters, PaginatedLabResponse, LabFilterOptions, RecommendedListingsResponse, RecommendedLabsResponse } from '../types';
 
 const API_BASE = '/api';
 
@@ -53,6 +53,18 @@ export async function fetchLabs(filters: LabFilters = {}): Promise<PaginatedLabR
 export async function fetchLab(id: string): Promise<Lab> {
   const res = await fetch(`${API_BASE}/labs/${id}`);
   if (!res.ok) throw new Error('Lab not found');
+  return res.json();
+}
+
+export async function fetchRecommendedListings(limit = 6): Promise<RecommendedListingsResponse> {
+  const res = await fetch(`${API_BASE}/listings/recommended?limit=${limit}`, { credentials: 'include' });
+  if (!res.ok) throw new Error('Failed to fetch recommended listings');
+  return res.json();
+}
+
+export async function fetchRecommendedLabs(limit = 6): Promise<RecommendedLabsResponse> {
+  const res = await fetch(`${API_BASE}/labs/recommended?limit=${limit}`, { credentials: 'include' });
+  if (!res.ok) throw new Error('Failed to fetch recommended labs');
   return res.json();
 }
 

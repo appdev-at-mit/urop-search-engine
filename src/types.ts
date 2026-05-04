@@ -81,3 +81,13 @@ export interface LabFilterOptions {
   researchAreas: string[];
   departments: string[];
 }
+
+export interface RecommendedListingsResponse {
+  listings: Listing[];
+  personalized: boolean;
+}
+
+export interface RecommendedLabsResponse {
+  labs: Lab[];
+  personalized: boolean;
+}

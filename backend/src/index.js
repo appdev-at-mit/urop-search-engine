@@ -1,6 +1,12 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '../.env' });
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 import express from 'express';
 import cors from 'cors';
 import cron from 'node-cron';
@@ -106,6 +112,15 @@ app.use('/api/profile', profileRouter);
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
+
+// In production, serve the built React frontend
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../../dist');
+  app.use(express.static(frontendPath));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
 
 async function startServer() {
   await connectToDatabase();

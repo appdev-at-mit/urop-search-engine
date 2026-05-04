@@ -28,6 +28,10 @@ __pycache__/
 *$py.class
 .Python
 
+# CDK
+infra/cdk.out
+infra/node_modules
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

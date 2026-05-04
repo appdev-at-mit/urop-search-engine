@@ -1,9 +1,11 @@
 import { useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, Search, Building2 } from 'lucide-react'
+import { ArrowRight, Search, Building2, Sparkles, FlaskConical } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
 import ListingCard from '../components/ListingCard'
-import { fetchListings, fetchDepartments, fetchListingLabs } from '../lib/api'
+import LabCard from '../components/LabCard'
+import { fetchListings, fetchDepartments, fetchListingLabs, fetchRecommendedListings, fetchRecommendedLabs } from '../lib/api'
+import { useAuth } from '../lib/auth'
 
 function SectionDots() {
   return (
@@ -17,6 +19,7 @@ function SectionDots() {
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const { data: deptData } = useQuery({
     queryKey: ['departments'],
@@ -31,6 +34,16 @@ export default function HomePage() {
   const { data: recentData } = useQuery({
     queryKey: ['listings', 'recent-preview'],
     queryFn: () => fetchListings({ page: 1 }),
+  })
+
+  const { data: recommendedListingsData } = useQuery({
+    queryKey: ['listings', 'recommended'],
+    queryFn: () => fetchRecommendedListings(6),
+  })
+
+  const { data: recommendedLabsData } = useQuery({
+    queryKey: ['labs', 'recommended'],
+    queryFn: () => fetchRecommendedLabs(3),
   })
 
   function handleSearch(
@@ -51,7 +64,13 @@ export default function HomePage() {
     departments: deptData?.length ?? 0,
   }
 
-  const previewListings = recentData?.listings.slice(0, 3) ?? []
+  const isPersonalized = recommendedListingsData?.personalized ?? false
+  const previewListings = isPersonalized
+    ? recommendedListingsData?.listings ?? []
+    : recentData?.listings.slice(0, 3) ?? []
+
+  const recommendedLabs = recommendedLabsData?.labs ?? []
+  const labsPersonalized = recommendedLabsData?.personalized ?? false
 
   return (
     <main>
@@ -115,7 +134,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Recent Listings */}
+      {/* Personalized / Recent Listings */}
       {previewListings.length > 0 && (
         <section className="px-8 pb-20">
           <div className="mx-auto max-w-7xl">
@@ -123,8 +142,26 @@ export default function HomePage() {
               <SectionDots />
               <div className="mb-6 flex items-end justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-primary">recent listings</h2>
-                  <p className="mt-1 text-sm text-text-secondary">the latest research opportunities.</p>
+                  {isPersonalized ? (
+                    <>
+                      <div className="mb-1 flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        <h2 className="text-2xl font-bold tracking-tight text-primary">for you</h2>
+                      </div>
+                      <p className="mt-1 text-sm text-text-secondary">
+                        opportunities matched to your {[
+                          user?.interests?.length ? 'interests' : '',
+                          user?.skills?.length ? 'skills' : '',
+                          user?.major ? 'major' : '',
+                        ].filter(Boolean).join(', ') || 'profile'}.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="text-2xl font-bold tracking-tight text-primary">recent listings</h2>
+                      <p className="mt-1 text-sm text-text-secondary">the latest research opportunities.</p>
+                    </>
+                  )}
                 </div>
                 <Link
                   to="/listings"
@@ -137,6 +174,40 @@ export default function HomePage() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {previewListings.map((listing, i) => (
                   <ListingCard key={listing._id} listing={listing} index={i} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Recommended Labs */}
+      {recommendedLabs.length > 0 && labsPersonalized && (
+        <section className="px-8 pb-20">
+          <div className="mx-auto max-w-7xl">
+            <div className="rounded-2xl bg-surface p-8 sm:p-10">
+              <SectionDots />
+              <div className="mb-6 flex items-end justify-between">
+                <div>
+                  <div className="mb-1 flex items-center gap-2">
+                    <FlaskConical className="h-5 w-5 text-primary" />
+                    <h2 className="text-2xl font-bold tracking-tight text-primary">labs for you</h2>
+                  </div>
+                  <p className="mt-1 text-sm text-text-secondary">
+                    research groups aligned with your background.
+                  </p>
+                </div>
+                <Link
+                  to="/labs"
+                  className="flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                >
+                  Browse labs
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {recommendedLabs.map((lab, i) => (
+                  <LabCard key={lab._id} lab={lab} index={i} />
                 ))}
               </div>
             </div>

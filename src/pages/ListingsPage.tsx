@@ -61,7 +61,6 @@ export default function ListingsPage() {
 
       <div className="animate-fade-in-up mb-8" style={{ animationDelay: '100ms' }}>
         <SearchBar
-          key={`${q}-${department}-${pay_or_credit}-${opportunity}-${lab}`}
           initialQuery={q}
           onSearch={handleSearch}
           large

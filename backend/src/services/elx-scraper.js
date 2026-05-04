@@ -157,11 +157,21 @@ export async function scrapeAndUpsert() {
     else if (result.modifiedCount > 0) updated++;
   }
 
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  const cutoff = threeMonthsAgo.toISOString().slice(0, 10);
+
+  const deactivated = await collection.updateMany(
+    { is_active: true, posted_date: { $lt: cutoff } },
+    { $set: { is_active: false, updated_at: new Date() } },
+  );
+
   lastScrapeResult = {
     scrapedAt: new Date().toISOString(),
     total: listings.length,
     inserted,
     updated,
+    deactivatedStale: deactivated.modifiedCount,
     departments: [...new Set(listings.map((l) => l.department))].sort(),
   };
 
