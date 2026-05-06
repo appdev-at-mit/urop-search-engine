@@ -48,9 +48,9 @@ export default function ListingDetailPage() {
 
   if (isError || !listing) {
     return (
-      <main className="mx-auto max-w-4xl px-8 py-20 text-center">
+      <main className="mx-auto max-w-6xl px-24 py-20 text-center">
         <p className="font-medium text-text">Listing not found</p>
-        <Link to="/listings" className="mt-4 inline-block text-sm text-primary hover:underline">
+        <Link to="/listings" className="mt-4 inline-block text-base text-primary hover:underline">
           Back to listings
         </Link>
       </main>
@@ -72,10 +72,10 @@ export default function ListingDetailPage() {
   const oppLabel = opportunityKindLabel(oppKind)
 
   return (
-    <main className="mx-auto max-w-4xl px-8 py-12">
+    <main className="mx-auto max-w-6xl px-24 py-12">
       <Link
         to="/listings"
-        className="animate-fade-in mb-8 inline-flex items-center gap-2 text-sm text-text-tertiary transition-colors hover:text-primary"
+        className="animate-fade-in mb-8 inline-flex items-center gap-2 text-base text-text-tertiary transition-colors hover:text-primary"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to listings
@@ -86,20 +86,20 @@ export default function ListingDetailPage() {
       >
         <div className="mb-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-            <h1 className="text-3xl font-bold leading-tight tracking-tight text-text">
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-text">
               {listing.title}
             </h1>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               {oppLabel && (
                 <span
-                  className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${opportunityBadgeClass(oppKind)}`}
+                  className={`rounded-full border px-4 py-1.5 text-base font-semibold ${opportunityBadgeClass(oppKind)}`}
                 >
                   {oppLabel}
                 </span>
               )}
               {listing.pay_or_credit && (
                 <span
-                  className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+                  className={`rounded-full border px-4 py-1.5 text-base font-medium ${
                     payColors[listing.pay_or_credit] ?? 'bg-bg text-text-secondary border-border'
                   }`}
                 >
@@ -125,8 +125,8 @@ export default function ListingDetailPage() {
               >
                 <FlaskConical className="h-4 w-4 shrink-0 text-primary" />
                 <div>
-                  <div className="text-xs text-text-tertiary">Lab</div>
-                  <div className="text-sm font-medium text-primary">{listing.lab}</div>
+                  <div className="text-sm text-text-tertiary">Lab</div>
+                  <div className="text-base font-medium text-primary">{listing.lab}</div>
                 </div>
               </Link>
             ) : (
@@ -168,10 +168,10 @@ export default function ListingDetailPage() {
 
         {listing.description && (
           <section className="mb-10">
-            <h2 className="mb-4 text-sm font-semibold text-primary">
+            <h2 className="mb-4 text-base font-semibold uppercase tracking-wide text-primary">
               description
             </h2>
-            <p className="whitespace-pre-line text-base leading-[1.8] text-text-secondary">
+            <p className="whitespace-pre-line text-lg leading-[1.8] text-text-secondary">
               {listing.description}
             </p>
           </section>
@@ -179,14 +179,14 @@ export default function ListingDetailPage() {
 
         {tags && tags.length > 0 && (
           <section className="mb-10">
-            <h2 className="mb-4 text-sm font-semibold text-primary">
+            <h2 className="mb-4 text-base font-semibold uppercase tracking-wide text-primary">
               requirements
             </h2>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-primary/8 px-3.5 py-1.5 text-sm font-medium text-primary"
+                  className="rounded-full bg-primary/8 px-3.5 py-1.5 text-base font-medium text-primary"
                 >
                   {tag}
                 </span>
@@ -200,7 +200,7 @@ export default function ListingDetailPage() {
             {listing.contact_email && (
               <a
                 href={`mailto:${listing.contact_email}`}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-white transition-all hover:bg-primary-dark active:scale-[0.97]"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-base font-medium text-white transition-all hover:bg-primary-dark active:scale-[0.97]"
               >
                 <Mail className="h-4 w-4" />
                 Contact Professor
@@ -211,7 +211,7 @@ export default function ListingDetailPage() {
                 href={listing.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-bg px-6 py-3 text-sm font-medium text-text-secondary transition-all hover:border-primary/40 hover:text-primary active:scale-[0.97]"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-bg px-6 py-3 text-base font-medium text-text-secondary transition-all hover:border-primary/40 hover:text-primary active:scale-[0.97]"
               >
                 <ExternalLink className="h-4 w-4" />
                 View Original
@@ -237,8 +237,8 @@ function InfoItem({
     <div className="flex items-center gap-3.5 rounded-xl bg-bg p-4">
       <Icon className="h-5 w-5 shrink-0 text-primary" />
       <div>
-        <div className="text-xs font-medium text-text-tertiary">{label}</div>
-        <div className="text-sm font-medium text-text">{value}</div>
+        <div className="text-sm font-medium text-text-tertiary">{label}</div>
+        <div className="text-base font-medium text-text">{value}</div>
       </div>
     </div>
   )

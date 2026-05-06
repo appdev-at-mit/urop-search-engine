@@ -124,7 +124,7 @@ export default function AdminPage() {
 
   if (!authenticated) {
     return (
-      <main className="mx-auto max-w-lg px-8 py-20">
+      <main className="mx-auto max-w-lg px-24 py-20">
         <div className="animate-fade-in text-center">
           <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
             <Shield className="h-6 w-6 text-primary" />
@@ -157,7 +157,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-8 py-12">
+    <main className="mx-auto max-w-3xl px-24 py-12">
       <div className="animate-fade-in mb-8">
         <p className="mb-1 text-sm font-medium text-text-tertiary">
           admin

@@ -2,8 +2,8 @@ import { type ReactNode, useState, useRef, useEffect, useLayoutEffect, Children,
 import { createPortal } from 'react-dom'
 import { ChevronDown, Check } from 'lucide-react'
 
-export const filterSelectClass =
-  'w-full min-w-0 appearance-none rounded-lg border border-border bg-bg py-2 pl-3 pr-9 text-sm text-text outline-none transition-colors hover:border-primary/40 focus:border-primary/40 focus:ring-1 focus:ring-primary/20'
+const filterSelectClass =
+  'w-full min-w-0 appearance-none rounded-lg border border-border bg-bg py-2.5 pl-3.5 pr-9 text-base text-text outline-none transition-colors hover:border-primary/40 focus:border-primary/40 focus:ring-1 focus:ring-primary/20'
 
 type OptionItem = { value: string; label: string }
 
@@ -120,7 +120,7 @@ export default function LabeledFilterSelect({
     >
       <label
         htmlFor={id}
-        className="text-[11px] font-semibold uppercase tracking-wider text-text-tertiary"
+        className="text-xs font-semibold uppercase tracking-wider text-text-tertiary"
       >
         {label}
       </label>
@@ -165,7 +165,7 @@ export default function LabeledFilterSelect({
                   setOpen(false)
                   buttonRef.current?.focus()
                 }}
-                className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                className={`flex cursor-pointer items-center gap-2 px-3.5 py-2.5 text-base transition-colors ${
                   isHighlighted ? 'bg-primary/10 text-text' : 'text-text'
                 } ${isSelected ? 'font-medium' : ''}`}
               >

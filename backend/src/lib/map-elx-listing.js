@@ -43,7 +43,7 @@ function payCreditFromStructured(compensation, compLookup) {
 /**
  * Prefer @mit.edu, then other .edu, then first address.
  */
-export function extractContactEmail(overview, tagline) {
+function extractContactEmail(overview, tagline) {
   const text = `${tagline || ''}\n${overview || ''}`;
   const matches = text.match(EMAIL_RE);
   if (!matches?.length) return null;
@@ -60,7 +60,7 @@ export function extractContactEmail(overview, tagline) {
 /**
  * Values must match filter UI: Pay | Credit | Both
  */
-export function inferPayOrCredit(overview, tagline) {
+function inferPayOrCredit(overview, tagline) {
   const text = `${tagline || ''}\n${overview || ''}`;
   if (!text.trim()) return null;
 

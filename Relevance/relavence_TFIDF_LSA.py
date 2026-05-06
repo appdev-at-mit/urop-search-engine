@@ -11,23 +11,17 @@ Ranking strategy (3 steps):
 
 from pathlib import Path
 import argparse
-import argparse
 import json
-import os
-import re
-import sys
 import os
 import re
 import sys
 
 import pdfplumber
 from pymongo import MongoClient
-from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import TruncatedSVD
 import numpy as np
-import matplotlib.pyplot as plt
 
 VERBOSE = False
 
@@ -242,79 +236,6 @@ def _load_projects_from_mongodb(
         client.close()
 
 
-def _load_env_file(env_path: Path) -> dict[str, str]:
-    vars = {}
-    if not env_path.exists():
-        return vars
-    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        vars[key.strip()] = value.strip()
-    return vars
-
-
-def _load_projects_from_mongodb(
-    mongo_uri: str,
-    db_name: str = "urop_search_engine",
-    collection_name: str = "listings",
-    limit: int | None = None,
-) -> list[dict]:
-    client = MongoClient(mongo_uri)
-    try:
-        db = client[db_name]
-        cursor = db[collection_name].find({"is_active": True}, {"_id": False})
-        if limit is not None:
-            cursor = cursor.limit(limit)
-        docs = list(cursor)
-        # Convert non-serializable types (e.g. datetime) to strings
-        for doc in docs:
-            for k, v in doc.items():
-                if hasattr(v, 'isoformat'):
-                    doc[k] = v.isoformat()
-        return docs
-    finally:
-        client.close()
-
-
-def _load_env_file(env_path: Path) -> dict[str, str]:
-    vars = {}
-    if not env_path.exists():
-        return vars
-
-    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        vars[key.strip()] = value.strip()
-
-    return vars
-
-
-def _load_projects_from_mongodb(
-    mongo_uri: str,
-    db_name: str = "urop_search_engine",
-    collection_name: str = "listings",
-    limit: int | None = None,
-) -> list[dict]:
-    client = MongoClient(mongo_uri)
-    try:
-        db = client[db_name]
-        cursor = db[collection_name].find({"is_active": True}, {"_id": False})
-        if limit is not None:
-            cursor = cursor.limit(limit)
-        docs = list(cursor)
-        # Convert non-serializable types
-        for doc in docs:
-            for k, v in doc.items():
-                if hasattr(v, 'isoformat'):
-                    doc[k] = v.isoformat()
-        return docs
-    finally:
-        client.close()
-
 def _classify_department(department: str) -> list[str]:
     dept_lower = department.lower()
     matched_majors = set()
@@ -341,6 +262,8 @@ def _project_to_text(project: dict, keys: tuple = ("department", "title", "descr
 
 
 def plot_LSA(svd):
+    import matplotlib.pyplot as plt
+
     singular_values = svd.singular_values_
     explained = svd.explained_variance_ratio_
     cumulative = np.cumsum(explained)
@@ -369,7 +292,6 @@ def find_most_relevant_LSA(
     resume_path: str,
     projects: list[dict],
     top_k: int = 10,
-    project_text_keys: tuple = ("department", "title", "description", "requirements", "professor", "lab", "keywords"),
     project_text_keys: tuple = ("department", "title", "description", "requirements", "professor", "lab", "keywords"),
     show_lsa_plots: bool = False,
 ) -> tuple[list[dict], np.ndarray]:
@@ -403,7 +325,6 @@ def find_most_relevant_LSA(
         plot_LSA(svd)
     else:
         cumulative = np.cumsum(svd.explained_variance_ratio_)
-        _log(f"[INFO] Cumulative explained variance ({n_components} components): {cumulative[-1]:.3f}")
         _log(f"[INFO] Cumulative explained variance ({n_components} components): {cumulative[-1]:.3f}")
 
     resume_vec = X_semantic[0:1]
@@ -453,53 +374,11 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description='Rank scraped MongoDB UROPs by resume relevance.')
-    parser.add_argument('--resume-path', type=str, required=True, help='Path to the PDF resume file.')
-    parser.add_argument('--top-k', type=int, default=10, help='Number of top results to return.')
-    parser.add_argument('--mongo-uri', type=str, default=None, help='MongoDB URI (overrides env/MONGODB_URI).')
-    parser.add_argument('--db-name', type=str, default='urop_search_engine', help='MongoDB database name.')
-    parser.add_argument('--collection-name', type=str, default='listings', help='MongoDB collection name.')
-    parser.add_argument('--limit', type=int, default=None, help='Maximum number of listings to load from MongoDB.')
-    parser.add_argument('--json', dest='json_output', action='store_true', help='Output results as JSON.')
-    parser.add_argument('--show-plots', action='store_true', help='Plot LSA diagnostics.')
-    parser.add_argument('--verbose', action='store_true', help='Print verbose debug logs.')
-    return parser.parse_args()
-
-
 if __name__ == "__main__":
     args = _parse_args()
-
-    VERBOSE = args.verbose
-
-    args = _parse_args()
-
     VERBOSE = args.verbose
 
     base_dir = Path(__file__).resolve().parent
-    project_root = base_dir.parent
-    env_vars = _load_env_file(project_root / ".env")
-    mongo_uri = args.mongo_uri or os.environ.get("MONGODB_URI") or env_vars.get("MONGODB_URI")
-    if not mongo_uri:
-        raise RuntimeError(
-            "MONGODB_URI is required. Set it in the environment or in the project root .env file."
-        )
-
-    db_name = args.db_name or os.environ.get("MONGODB_DB_NAME") or env_vars.get("MONGODB_DB_NAME", "urop_search_engine")
-    projects = _load_projects_from_mongodb(
-        mongo_uri,
-        db_name=db_name,
-        collection_name=args.collection_name,
-        limit=args.limit,
-    )
-
-    results, indices = find_most_relevant_LSA(str(args.resume_path), projects, top_k=args.top_k)
-    if args.json_output:
-        json.dump(results, sys.stdout, indent=2)
-    else:
-        for r in results:
-            match_flag = "✓" if r["major_match"] else " "
-            print(f"[{match_flag}] {r['score']:.4f}  {r['department']:<40}  {r['title']}")
     project_root = base_dir.parent
     env_vars = _load_env_file(project_root / ".env")
     mongo_uri = args.mongo_uri or os.environ.get("MONGODB_URI") or env_vars.get("MONGODB_URI")

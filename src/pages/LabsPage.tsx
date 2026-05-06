@@ -80,13 +80,13 @@ export default function LabsPage() {
   const departments = filterOptions?.departments ?? []
 
   return (
-    <main className="mx-auto max-w-7xl px-8 py-12">
+    <main className="px-24 py-12">
       <div className="animate-fade-in mb-2">
-        <p className="mb-1 text-sm font-medium text-text-tertiary">
+        <p className="mb-1 text-base font-medium text-text-tertiary">
           discover
         </p>
-        <h1 className="mb-2 text-4xl font-bold tracking-tight text-text">lab groups</h1>
-        <p className="mb-8 text-sm text-text-tertiary">
+        <h1 className="mb-3 text-5xl font-bold tracking-tight text-text">lab groups</h1>
+        <p className="mb-8 text-lg text-text-tertiary">
           Browse MIT research labs and groups to find research areas that interest you
         </p>
       </div>
@@ -104,11 +104,11 @@ export default function LabsPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by lab name, PI, or research area..."
-              className="w-full bg-transparent text-lg text-text outline-none placeholder:text-text-tertiary"
+              className="w-full bg-transparent text-xl text-text outline-none placeholder:text-text-tertiary"
             />
             <button
               type="submit"
-              className="flex shrink-0 items-center gap-2 rounded-full bg-primary px-7 py-3 text-base font-medium text-white transition-all hover:bg-primary-dark active:scale-[0.97]"
+              className="flex shrink-0 items-center gap-2 rounded-full bg-primary px-7 py-3 text-lg font-medium text-white transition-all hover:bg-primary-dark active:scale-[0.97]"
             >
               Search
               <ArrowRight className="h-4 w-4" />
@@ -121,14 +121,14 @@ export default function LabsPage() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-text-secondary">
                   <Filter className="h-4 w-4 shrink-0 text-text-tertiary" aria-hidden />
-                  <span className="text-sm font-medium text-text">Filters</span>
-                  <span className="text-xs text-text-tertiary">narrow results by field</span>
+                  <span className="text-base font-medium text-text">Filters</span>
+                  <span className="text-sm text-text-tertiary">narrow results by field</span>
                 </div>
                 {hasFilters && (
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:bg-bg hover:text-text"
+                    className="flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-base text-text-tertiary transition-colors hover:bg-bg hover:text-text"
                   >
                     <X className="h-3.5 w-3.5" />
                     Clear all
@@ -186,7 +186,7 @@ export default function LabsPage() {
       </form>
 
       {data && (
-        <p className="mb-5 text-sm text-text-tertiary">
+        <p className="mb-5 text-base text-text-tertiary">
           {data.pagination.total} lab{data.pagination.total !== 1 ? 's' : ''}
           {q && (
             <>
@@ -223,7 +223,7 @@ export default function LabsPage() {
 
       {isError && (
         <div className="animate-fade-in rounded-2xl border border-accent/20 bg-accent/5 p-10 text-center">
-          <p className="text-sm text-accent">
+          <p className="text-base text-accent">
             Failed to load labs. Make sure the backend is running on port 3001.
           </p>
         </div>
@@ -231,13 +231,13 @@ export default function LabsPage() {
 
       {data && data.labs.length === 0 && (
         <div className="animate-fade-in rounded-2xl bg-surface p-16 text-center">
-          <p className="font-medium text-text">No labs found</p>
-          <p className="mt-2 text-sm text-text-tertiary">Try adjusting your search or filters</p>
+          <p className="text-lg font-medium text-text">No labs found</p>
+          <p className="mt-2 text-base text-text-tertiary">Try adjusting your search or filters</p>
         </div>
       )}
 
       {data && data.labs.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {data.labs.map((lab, i) => (
             <LabCard key={lab._id} lab={lab} index={i} />
           ))}

@@ -188,7 +188,7 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <main className="mx-auto max-w-lg px-8 py-24 text-center">
+      <main className="mx-auto max-w-lg px-24 py-24 text-center">
         <div className="animate-fade-in">
           <div className="mb-6 flex justify-center">
             <div className="rounded-2xl bg-surface p-5">
@@ -236,7 +236,7 @@ export default function ProfilePage() {
     parsedHighlight.has(field) ? 'ring-2 ring-primary/40 bg-primary/5' : ''
 
   return (
-    <main className="mx-auto max-w-7xl px-8 py-12">
+    <main className="px-24 py-12">
       {/* Header */}
       <div className="animate-fade-in mb-10 flex items-center justify-between">
         <div>
@@ -520,7 +520,7 @@ export default function ProfilePage() {
               )}
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {results.map((listing, i) => (
               <div key={listing.elx_id ?? i} className="relative">
                 {listing.major_match && (

@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { Search, ArrowRight, Filter, X } from 'lucide-react'
 import LabeledFilterSelect from './LabeledFilterSelect'
 
-export type SearchFilters = {
+type SearchFilters = {
   department?: string
   pay?: string
   opportunity?: string
@@ -99,13 +99,13 @@ export default function SearchBar({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
             className={`w-full bg-transparent text-text outline-none placeholder:text-text-tertiary ${
-              large ? 'text-lg' : 'text-sm'
+              large ? 'text-xl' : 'text-base'
             }`}
           />
           <button
             type="submit"
             className={`shrink-0 rounded-full bg-primary font-medium text-white transition-all hover:bg-primary-dark active:scale-[0.97] ${
-              large ? 'flex items-center gap-2 px-7 py-3 text-base' : 'px-4 py-1.5 text-sm'
+              large ? 'flex items-center gap-2 px-7 py-3 text-lg' : 'px-4 py-1.5 text-base'
             }`}
           >
             Search
@@ -118,14 +118,14 @@ export default function SearchBar({
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-text-secondary">
                 <Filter className="h-4 w-4 shrink-0 text-text-tertiary" aria-hidden />
-                <span className="text-sm font-medium text-text">Filters</span>
-                <span className="text-xs text-text-tertiary">narrow results by field</span>
+                <span className="text-base font-medium text-text">Filters</span>
+                <span className="text-sm text-text-tertiary">narrow results by field</span>
               </div>
               {hasFilters && (
                 <button
                   type="button"
                   onClick={() => commitFilters({ department: '', pay: '', opportunity: '', lab: '' })}
-                  className="flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm text-text-tertiary transition-colors hover:bg-bg hover:text-text"
+                  className="flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-base text-text-tertiary transition-colors hover:bg-bg hover:text-text"
                 >
                   <X className="h-3.5 w-3.5" />
                   Clear all

@@ -48,7 +48,6 @@ const KNOWN_SKILLS = [
 
 function parseResumeText(text) {
   const parsed = {};
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
   // GPA
   const gpaMatch = text.match(/GPA[:\s]*(\d\.\d{1,2})/i)

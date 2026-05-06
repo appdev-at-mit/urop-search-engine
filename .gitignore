@@ -15,8 +15,8 @@ elx_scraper/data/*.json
 elx_scraper/data/*.csv
 
 node_modules
-dist
-dist-ssr
+/dist
+/dist-ssr
 *.local
 *.db
 *.db-shm

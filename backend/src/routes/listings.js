@@ -9,6 +9,20 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * Remove items that are just the abbreviation when a longer form already
+ * contains it in parentheses, e.g. "CSAIL" is dropped when
+ * "Computer Sci and AI Lab (CSAIL)" exists.
+ */
+function deduplicateAbbreviations(items) {
+  const abbrevs = new Set();
+  for (const item of items) {
+    const m = item.match(/\(([^)]+)\)/);
+    if (m) abbrevs.add(m[1].trim().toLowerCase());
+  }
+  return items.filter((item) => !abbrevs.has(item.trim().toLowerCase()));
+}
+
 router.get('/', async (req, res) => {
   const {
     q = '',
@@ -41,11 +55,19 @@ router.get('/', async (req, res) => {
       ];
     }
     if (department) {
-      query.department = { $regex: department, $options: 'i' };
+      const abbr = department.match(/\(([^)]+)\)$/);
+      const pattern = abbr
+        ? `(${escapeRegex(department)}|${escapeRegex(abbr[1].trim())})`
+        : escapeRegex(department);
+      query.department = { $regex: pattern, $options: 'i' };
     }
     if (lab) {
       const trimmed = lab.trim();
-      query.lab = { $regex: `^${escapeRegex(trimmed)}$`, $options: 'i' };
+      const abbr = trimmed.match(/\(([^)]+)\)$/);
+      const pattern = abbr
+        ? `^(${escapeRegex(trimmed)}|${escapeRegex(abbr[1].trim())})$`
+        : `^${escapeRegex(trimmed)}$`;
+      query.lab = { $regex: pattern, $options: 'i' };
     }
     if (pay_or_credit) {
       query.pay_or_credit = pay_or_credit;
@@ -93,7 +115,7 @@ router.get('/departments', async (_req, res) => {
     for (const d of raw) {
       primarySet.add(d.includes('/') ? d.split('/')[0].trim() : d.trim());
     }
-    const departments = [...primarySet].sort((a, b) => a.localeCompare(b));
+    const departments = deduplicateAbbreviations([...primarySet].sort((a, b) => a.localeCompare(b)));
     res.json(departments);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch departments', details: error.message });
@@ -109,7 +131,7 @@ router.get('/labs', async (_req, res) => {
     });
 
     labs.sort((a, b) => a.localeCompare(b));
-    res.json(labs);
+    res.json(deduplicateAbbreviations(labs));
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch labs', details: error.message });
   }

@@ -5,6 +5,24 @@ import { getDb } from '../db.js';
 
 const router = Router();
 
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Remove items that are just the abbreviation when a longer form already
+ * contains it in parentheses, e.g. "CSAIL" is dropped when
+ * "Computer Sci and AI Lab (CSAIL)" exists.
+ */
+function deduplicateAbbreviations(items) {
+  const abbrevs = new Set();
+  for (const item of items) {
+    const m = item.match(/\(([^)]+)\)/);
+    if (m) abbrevs.add(m[1].trim().toLowerCase());
+  }
+  return items.filter((item) => !abbrevs.has(item.trim().toLowerCase()));
+}
+
 /**
  * Tags that should filter the same labs (exact string in `research_areas` arrays).
  * Case-insensitive on the request value so ?research_area=ai still works.
@@ -44,7 +62,11 @@ router.get('/filters', async (_req, res) => {
     }
     const departments = [...deptSet].sort((a, b) => a.localeCompare(b));
 
-    res.json({ parentOrgs, researchAreas, departments });
+    res.json({
+      parentOrgs: deduplicateAbbreviations(parentOrgs),
+      researchAreas: deduplicateAbbreviations(researchAreas),
+      departments: deduplicateAbbreviations(departments),
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch lab filters', details: error.message });
   }
@@ -81,11 +103,20 @@ router.get('/', async (req, res) => {
     }
 
     if (department) {
-      query.department = { $regex: department, $options: 'i' };
+      const abbr = department.match(/\(([^)]+)\)$/);
+      const pattern = abbr
+        ? `(${escapeRegex(department)}|${escapeRegex(abbr[1].trim())})`
+        : escapeRegex(department);
+      query.department = { $regex: pattern, $options: 'i' };
     }
 
     if (parent_org) {
-      query.parent_org = parent_org;
+      const abbr = parent_org.match(/\(([^)]+)\)$/);
+      if (abbr) {
+        query.parent_org = { $regex: `^(${escapeRegex(parent_org)}|${escapeRegex(abbr[1].trim())})$`, $options: 'i' };
+      } else {
+        query.parent_org = parent_org;
+      }
     }
 
     if (research_area) {

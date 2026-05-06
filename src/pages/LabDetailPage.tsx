@@ -38,9 +38,9 @@ export default function LabDetailPage() {
 
   if (isError || !lab) {
     return (
-      <main className="mx-auto max-w-4xl px-8 py-20 text-center">
+      <main className="mx-auto max-w-6xl px-24 py-20 text-center">
         <p className="font-medium text-text">Lab not found</p>
-        <Link to="/labs" className="mt-4 inline-block text-sm text-primary hover:underline">
+        <Link to="/labs" className="mt-4 inline-block text-base text-primary hover:underline">
           Back to labs
         </Link>
       </main>
@@ -48,10 +48,10 @@ export default function LabDetailPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-8 py-12">
+    <main className="mx-auto max-w-6xl px-24 py-12">
       <Link
         to="/labs"
-        className="animate-fade-in mb-8 inline-flex items-center gap-2 text-sm text-text-tertiary transition-colors hover:text-primary"
+        className="animate-fade-in mb-8 inline-flex items-center gap-2 text-base text-text-tertiary transition-colors hover:text-primary"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to labs
@@ -60,7 +60,7 @@ export default function LabDetailPage() {
       <article className="animate-fade-in-up rounded-2xl bg-surface p-8 sm:p-10">
         <div className="mb-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-            <h1 className="text-3xl font-bold leading-tight tracking-tight text-text">
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-text">
               {lab.name}
               {lab.acronym && (
                 <span className="ml-2 text-xl font-normal text-text-tertiary">
@@ -69,7 +69,7 @@ export default function LabDetailPage() {
               )}
             </h1>
             {lab.parent_org && (
-              <span className="shrink-0 rounded-full border border-primary/20 bg-primary/8 px-4 py-1.5 text-sm font-medium text-primary">
+              <span className="shrink-0 rounded-full border border-primary/20 bg-primary/8 px-4 py-1.5 text-base font-medium text-primary">
                 {lab.parent_org}
               </span>
             )}
@@ -93,10 +93,10 @@ export default function LabDetailPage() {
 
         {lab.description && (
           <section className="mb-10">
-            <h2 className="mb-4 text-sm font-semibold text-primary">
+            <h2 className="mb-4 text-base font-semibold uppercase tracking-wide text-primary">
               about
             </h2>
-            <p className="whitespace-pre-line text-base leading-[1.8] text-text-secondary">
+            <p className="whitespace-pre-line text-lg leading-[1.8] text-text-secondary">
               {lab.description}
             </p>
           </section>
@@ -104,7 +104,7 @@ export default function LabDetailPage() {
 
         {lab.research_areas.length > 0 && (
           <section className="mb-10">
-            <h2 className="mb-4 text-sm font-semibold text-primary">
+            <h2 className="mb-4 text-base font-semibold uppercase tracking-wide text-primary">
               research areas
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -112,7 +112,7 @@ export default function LabDetailPage() {
                 <Link
                   key={area}
                   to={`/labs?research_area=${encodeURIComponent(area)}`}
-                  className="rounded-full bg-primary/8 px-3.5 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
+                  className="rounded-full bg-primary/8 px-3.5 py-1.5 text-base font-medium text-primary transition-colors hover:bg-primary/15"
                 >
                   {area}
                 </Link>
@@ -128,7 +128,7 @@ export default function LabDetailPage() {
                 href={lab.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-white transition-all hover:bg-primary-dark active:scale-[0.97]"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-base font-medium text-white transition-all hover:bg-primary-dark active:scale-[0.97]"
               >
                 <ExternalLink className="h-4 w-4" />
                 Visit Lab Website
@@ -137,7 +137,7 @@ export default function LabDetailPage() {
             {lab.contact_email && (
               <a
                 href={`mailto:${lab.contact_email}`}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-bg px-6 py-3 text-sm font-medium text-text-secondary transition-all hover:border-primary/40 hover:text-primary active:scale-[0.97]"
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-bg px-6 py-3 text-base font-medium text-text-secondary transition-all hover:border-primary/40 hover:text-primary active:scale-[0.97]"
               >
                 <Mail className="h-4 w-4" />
                 Contact
@@ -149,7 +149,7 @@ export default function LabDetailPage() {
 
       {relatedListings && relatedListings.listings.length > 0 && (
         <section className="animate-fade-in-up mt-8" style={{ animationDelay: '200ms' }}>
-          <h2 className="mb-4 text-sm font-semibold text-primary">
+          <h2 className="mb-4 text-base font-semibold uppercase tracking-wide text-primary">
             related UROP listings
           </h2>
           <div className="grid grid-cols-1 gap-3">
@@ -160,7 +160,7 @@ export default function LabDetailPage() {
           {relatedListings.pagination.total > 6 && (
             <Link
               to={`/listings?q=${encodeURIComponent(lab.name)}`}
-              className="mt-4 inline-block text-sm text-primary hover:underline"
+              className="mt-4 inline-block text-base text-primary hover:underline"
             >
               View all {relatedListings.pagination.total} listings
             </Link>
@@ -184,8 +184,8 @@ function InfoItem({
     <div className="flex items-center gap-3.5 rounded-xl bg-bg p-4">
       <Icon className="h-5 w-5 shrink-0 text-primary" />
       <div>
-        <div className="text-xs font-medium text-text-tertiary">{label}</div>
-        <div className="text-sm font-medium text-text">{value}</div>
+        <div className="text-sm font-medium text-text-tertiary">{label}</div>
+        <div className="text-base font-medium text-text">{value}</div>
       </div>
     </div>
   )

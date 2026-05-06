@@ -17,7 +17,7 @@ export default function LabCard({ lab, index = 0 }: LabCardProps) {
       style={{ animationDelay: `${index * 40}ms` }}
     >
       <div className="mb-2 flex items-start justify-between gap-2">
-        <h3 className="text-lg font-bold leading-snug tracking-tight text-text transition-colors group-hover:text-primary">
+        <h3 className="text-xl font-bold leading-snug tracking-tight text-text transition-colors group-hover:text-primary">
           {lab.name}
           {lab.acronym && (
             <span className="ml-1.5 text-sm font-normal text-text-tertiary">
@@ -30,7 +30,7 @@ export default function LabCard({ lab, index = 0 }: LabCardProps) {
         )}
       </div>
 
-      <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-tertiary">
+      <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-text-tertiary">
         {lab.parent_org && (
           <span className="flex items-center gap-1">
             <Building2 className="h-3 w-3" />
@@ -46,7 +46,7 @@ export default function LabCard({ lab, index = 0 }: LabCardProps) {
       </div>
 
       {lab.description && (
-        <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-text-secondary">
+        <p className="mb-4 line-clamp-2 text-base leading-relaxed text-text-secondary">
           {lab.description}
         </p>
       )}

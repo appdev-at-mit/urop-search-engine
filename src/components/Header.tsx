@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { FlaskConical, User, LogOut, ChevronDown } from 'lucide-react'
+import { User, LogOut, ChevronDown } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 
 export default function Header() {
@@ -33,11 +33,11 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-bg/80 backdrop-blur-lg">
-      <div className="mx-auto flex min-h-[4.5rem] max-w-7xl items-center justify-between px-8 py-3">
+    <header className="sticky top-0 z-50 border-b-4 border-border bg-bg/80 backdrop-blur-lg">
+      <div className="mx-auto flex min-h-[4.5rem] items-center justify-between px-24 py-3">
         <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-70">
-          <FlaskConical className="h-6 w-6 text-primary" />
-          <span className="text-lg font-semibold tracking-tight text-text">urop search</span>
+          <img src="/logo.png" alt="UROP Search logo" className="h-27 w-25" />
+          <span className="text-2xl font-bold tracking-tight text-primary">urop search</span>
         </Link>
 
         <nav className="flex items-center gap-8">
@@ -45,7 +45,7 @@ export default function Header() {
             <Link
               key={link.to}
               to={link.to}
-              className={`text-base transition-colors ${
+              className={`text-lg transition-colors ${
                 location.pathname === link.to
                   ? 'font-semibold text-text'
                   : 'font-medium text-text-secondary hover:text-text'
@@ -54,12 +54,6 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          <Link
-            to="/admin"
-            className="rounded-full bg-primary px-5 py-2 text-base font-semibold text-white transition-colors hover:bg-primary-dark"
-          >
-            Admin
-          </Link>
 
           {/* Profile avatar / sign-in */}
           {!loading && (

@@ -51,12 +51,12 @@ export default function ListingsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-8 py-12">
+    <main className="px-24 py-12">
       <div className="animate-fade-in mb-2">
-        <p className="mb-1 text-sm font-medium text-text-tertiary">
+        <p className="mb-1 text-base font-medium text-text-tertiary">
           search
         </p>
-        <h1 className="mb-8 text-4xl font-bold tracking-tight text-text">browse listings</h1>
+        <h1 className="mb-8 text-5xl font-bold tracking-tight text-text">browse listings</h1>
       </div>
 
       <div className="animate-fade-in-up mb-8" style={{ animationDelay: '100ms' }}>
@@ -74,7 +74,7 @@ export default function ListingsPage() {
       </div>
 
       {data && (
-        <p className="mb-5 text-sm text-text-tertiary">
+        <p className="mb-5 text-base text-text-tertiary">
           {data.pagination.total} result{data.pagination.total !== 1 ? 's' : ''}
           {q && (
             <>
@@ -93,7 +93,7 @@ export default function ListingsPage() {
 
       {isError && (
         <div className="animate-fade-in rounded-2xl border border-accent/20 bg-accent/5 p-10 text-center">
-          <p className="text-sm text-accent">
+          <p className="text-base text-accent">
             Failed to load listings. Make sure the backend is running on port 3001.
           </p>
         </div>
@@ -101,13 +101,13 @@ export default function ListingsPage() {
 
       {data && data.listings.length === 0 && (
         <div className="animate-fade-in rounded-2xl bg-surface p-16 text-center">
-          <p className="font-medium text-text">No listings found</p>
-          <p className="mt-2 text-sm text-text-tertiary">Try adjusting your search or filters</p>
+          <p className="text-lg font-medium text-text">No listings found</p>
+          <p className="mt-2 text-base text-text-tertiary">Try adjusting your search or filters</p>
         </div>
       )}
 
       {data && data.listings.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {data.listings.map((listing, i) => (
             <ListingCard key={listing._id} listing={listing} index={i} />
           ))}
