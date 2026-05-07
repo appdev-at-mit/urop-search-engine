@@ -6,6 +6,7 @@ const LABS_COLLECTION_NAME = 'labs';
 
 let client;
 let database;
+let indexesEnsured = false;
 
 export async function connectToDatabase() {
   if (database) {
@@ -18,24 +19,33 @@ export async function connectToDatabase() {
   }
 
   if (!client) {
-    client = new MongoClient(mongoUri);
+    client = new MongoClient(mongoUri, {
+      minPoolSize: 2,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
+    });
   }
 
   await client.connect();
   const dbName = process.env.MONGODB_DB_NAME || DEFAULT_DB_NAME;
   database = client.db(dbName);
 
-  await database.collection(DEFAULT_COLLECTION_NAME).createIndexes([
-    { key: { is_active: 1, posted_date: -1 } },
-    { key: { title: 'text', professor: 'text', department: 'text', lab: 'text', description: 'text', requirements: 'text' } },
-  ]);
-
-  await database.collection(LABS_COLLECTION_NAME).createIndexes([
-    { key: { name: 'text', pi: 'text', description: 'text' } },
-    { key: { parent_org: 1 } },
-    { key: { department: 1 } },
-    { key: { research_areas: 1 } },
-  ]);
+  if (!indexesEnsured) {
+    await Promise.all([
+      database.collection(DEFAULT_COLLECTION_NAME).createIndexes([
+        { key: { is_active: 1, posted_date: -1 } },
+        { key: { title: 'text', professor: 'text', department: 'text', lab: 'text', description: 'text', requirements: 'text' } },
+      ]),
+      database.collection(LABS_COLLECTION_NAME).createIndexes([
+        { key: { name: 'text', pi: 'text', description: 'text' } },
+        { key: { parent_org: 1 } },
+        { key: { department: 1 } },
+        { key: { research_areas: 1 } },
+      ]),
+    ]);
+    indexesEnsured = true;
+  }
 
   return database;
 }

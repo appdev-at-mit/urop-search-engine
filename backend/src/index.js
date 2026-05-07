@@ -126,6 +126,11 @@ async function startServer() {
   await connectToDatabase();
   await loadPersistedToken();
 
+  setInterval(async () => {
+    try { await (await getDb()).command({ ping: 1 }); }
+    catch { /* reconnect will happen on next real query */ }
+  }, 4 * 60 * 1000);
+
   cron.schedule('0 6 * * *', async () => {
     const status = getTokenStatus();
     if (!status.valid) {
