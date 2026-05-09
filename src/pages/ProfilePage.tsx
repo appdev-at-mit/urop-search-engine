@@ -1,29 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Loader2, Upload, FileText, X, CheckCircle, AlertCircle, LogOut, User, Save, Sparkles } from 'lucide-react'
-import ListingCard from '../components/ListingCard'
-import { useAuth } from '../lib/auth'
+import { Loader2, Upload, FileText, X, CheckCircle, AlertCircle, LogOut, User, Save, Sparkles, Plus, Briefcase, Pencil, Trash2 } from 'lucide-react'
+import { useAuth, type ExperienceEntry } from '../lib/auth'
 
 interface ResumeInfo {
   filename: string
   uploadedAt: string
 }
 
-interface RankedListing {
-  elx_id: string
-  title: string
-  department: string
-  score: number
-  major_match: boolean
-  [key: string]: unknown
-}
-
 interface ParsedFields {
   major?: string
   year?: string
   gpa?: string
+  bio?: string
   skills?: string[]
   interests?: string[]
+  experience?: ExperienceEntry[]
 }
 
 async function fetchResumeInfo(): Promise<ResumeInfo | null> {
@@ -33,7 +25,7 @@ async function fetchResumeInfo(): Promise<ResumeInfo | null> {
   return data.resume
 }
 
-async function uploadResume(file: File): Promise<{ filename: string; parsed: ParsedFields }> {
+async function uploadResume(file: File): Promise<{ filename: string; parsed: ParsedFields; parseError: string | null }> {
   const formData = new FormData()
   formData.append('resume', file)
   const res = await fetch('/api/profile/resume', {
@@ -48,24 +40,80 @@ async function uploadResume(file: File): Promise<{ filename: string; parsed: Par
     throw new Error(msg)
   }
   const data = await res.json()
-  return { filename: data.filename, parsed: data.parsed || {} }
+  return { filename: data.filename, parsed: data.parsed || {}, parseError: data.parseError || null }
 }
 
-async function rankListings(topK = 10): Promise<RankedListing[]> {
-  const res = await fetch('/api/profile/resume/rank', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ top_k: topK }),
-  })
-  if (!res.ok) {
-    const text = await res.text()
-    let msg = 'Ranking failed'
-    try { msg = JSON.parse(text).error || msg } catch {}
-    throw new Error(msg)
+
+function ExperienceForm({
+  initial,
+  onSave,
+  onCancel,
+}: {
+  initial: ExperienceEntry | null
+  onSave: (entry: ExperienceEntry) => void
+  onCancel: () => void
+}) {
+  const [title, setTitle] = useState(initial?.title || '')
+  const [organization, setOrganization] = useState(initial?.organization || '')
+  const [startDate, setStartDate] = useState(initial?.startDate || '')
+  const [endDate, setEndDate] = useState(initial?.endDate || '')
+  const [description, setDescription] = useState(initial?.description || '')
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!title.trim() || !organization.trim()) return
+    onSave({
+      id: initial?.id || crypto.randomUUID(),
+      title: title.trim(),
+      organization: organization.trim(),
+      startDate: startDate.trim(),
+      endDate: endDate.trim(),
+      description: description.trim(),
+    })
   }
-  const data = await res.json()
-  return data.results
+
+  const inputClass = 'w-full rounded-lg border border-text-tertiary/20 bg-bg px-3 py-2 text-sm text-text placeholder:text-text-tertiary/50 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30'
+
+  return (
+    <form onSubmit={handleSubmit} className="rounded-xl border border-primary/20 bg-primary/[0.02] p-4 space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-tertiary">Title / Role *</label>
+          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Research Assistant" className={inputClass} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-tertiary">Organization / Lab *</label>
+          <input type="text" value={organization} onChange={e => setOrganization(e.target.value)} placeholder="e.g. CSAIL — Berger Lab" className={inputClass} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-tertiary">Start Date</label>
+          <input type="text" value={startDate} onChange={e => setStartDate(e.target.value)} placeholder="e.g. Sep 2025" className={inputClass} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-tertiary">End Date</label>
+          <input type="text" value={endDate} onChange={e => setEndDate(e.target.value)} placeholder="e.g. Present" className={inputClass} />
+        </div>
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-text-tertiary">Description</label>
+        <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Brief summary of your work..." rows={2} className={`${inputClass} resize-none`} />
+      </div>
+      <div className="flex justify-end gap-2 pt-1">
+        <button type="button" onClick={onCancel} className="rounded-lg px-3 py-1.5 text-sm text-text-tertiary hover:text-text transition-colors">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={!title.trim() || !organization.trim()}
+          className="rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-40"
+        >
+          {initial ? 'Update' : 'Add'}
+        </button>
+      </div>
+    </form>
+  )
 }
 
 export default function ProfilePage() {
@@ -74,8 +122,6 @@ export default function ProfilePage() {
 
   const [resumeInfo, setResumeInfo] = useState<ResumeInfo | null>(null)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle')
-  const [rankStatus, setRankStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [results, setResults] = useState<RankedListing[]>([])
   const [errorMsg, setErrorMsg] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -89,6 +135,9 @@ export default function ProfilePage() {
   const [interests, setInterests] = useState<string[]>([])
   const [skillInput, setSkillInput] = useState('')
   const [interestInput, setInterestInput] = useState('')
+  const [experience, setExperience] = useState<ExperienceEntry[]>([])
+  const [editingExp, setEditingExp] = useState<ExperienceEntry | null>(null)
+  const [showExpForm, setShowExpForm] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [parsedHighlight, setParsedHighlight] = useState<Set<string>>(new Set())
 
@@ -103,16 +152,17 @@ export default function ProfilePage() {
       setBio(user.bio || '')
       setSkills(user.skills || [])
       setInterests(user.interests || [])
+      setExperience(user.experience || [])
       fetchResumeInfo().then(setResumeInfo)
     }
   }, [user])
 
   const handleSave = useCallback(async () => {
     setSaveStatus('saving')
-    const ok = await updateProfile({ major, year, gpa, bio, skills, interests })
+    const ok = await updateProfile({ major, year, gpa, bio, skills, interests, experience })
     setSaveStatus(ok ? 'saved' : 'error')
     if (ok) setTimeout(() => setSaveStatus('idle'), 2000)
-  }, [major, year, gpa, bio, skills, interests, updateProfile])
+  }, [major, year, gpa, bio, skills, interests, experience, updateProfile])
 
   async function handleFileSelect(file: File) {
     if (!file.name.endsWith('.pdf')) {
@@ -123,18 +173,29 @@ export default function ProfilePage() {
     setErrorMsg('')
     setParsedHighlight(new Set())
     try {
-      const { parsed } = await uploadResume(file)
+      const { parsed, parseError } = await uploadResume(file)
       const info = await fetchResumeInfo()
       setResumeInfo(info)
-      setUploadStatus('success')
 
-      // Auto-fill parsed fields and highlight them
+      const fieldCount = Object.keys(parsed).length
+      if (parseError) {
+        setErrorMsg(parseError)
+        setUploadStatus('error')
+      } else if (fieldCount === 0) {
+        setErrorMsg('Resume saved, but we couldn\'t extract any profile fields. Try a text-based PDF (not a scanned image).')
+        setUploadStatus('error')
+      } else {
+        setUploadStatus('success')
+      }
+
       const filled = new Set<string>()
-      if (parsed.major && !major) { setMajor(parsed.major); filled.add('major') }
-      if (parsed.year && !year) { setYear(parsed.year); filled.add('year') }
-      if (parsed.gpa && !gpa) { setGpa(parsed.gpa); filled.add('gpa') }
-      if (parsed.skills?.length && skills.length === 0) { setSkills(parsed.skills); filled.add('skills') }
-      if (parsed.interests?.length && interests.length === 0) { setInterests(parsed.interests); filled.add('interests') }
+      if (parsed.major) { setMajor(parsed.major); filled.add('major') }
+      if (parsed.year) { setYear(parsed.year); filled.add('year') }
+      if (parsed.gpa) { setGpa(parsed.gpa); filled.add('gpa') }
+      if (parsed.bio) { setBio(parsed.bio); filled.add('bio') }
+      if (parsed.skills?.length) { setSkills(parsed.skills); filled.add('skills') }
+      if (parsed.interests?.length) { setInterests(parsed.interests); filled.add('interests') }
+      if (parsed.experience?.length) { setExperience(parsed.experience); filled.add('experience') }
       setParsedHighlight(filled)
       if (filled.size > 0) setTimeout(() => setParsedHighlight(new Set()), 5000)
 
@@ -145,25 +206,9 @@ export default function ProfilePage() {
     }
   }
 
-  async function handleRank() {
-    setRankStatus('loading')
-    setResults([])
-    setErrorMsg('')
-    try {
-      const ranked = await rankListings(10)
-      setResults(ranked)
-      setRankStatus('success')
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Ranking failed')
-      setRankStatus('error')
-    }
-  }
-
   async function handleLogout() {
     await logout()
     setResumeInfo(null)
-    setResults([])
-    setRankStatus('idle')
   }
 
   function addSkill() {
@@ -176,6 +221,25 @@ export default function ProfilePage() {
     const val = interestInput.trim()
     if (val && !interests.includes(val)) setInterests(prev => [...prev, val])
     setInterestInput('')
+  }
+
+  function saveExpEntry(entry: ExperienceEntry) {
+    if (editingExp) {
+      setExperience(prev => prev.map(e => e.id === entry.id ? entry : e))
+    } else {
+      setExperience(prev => [...prev, entry])
+    }
+    setEditingExp(null)
+    setShowExpForm(false)
+  }
+
+  function removeExpEntry(id: string) {
+    setExperience(prev => prev.filter(e => e.id !== id))
+  }
+
+  function startEditExp(entry: ExperienceEntry) {
+    setEditingExp(entry)
+    setShowExpForm(true)
   }
 
   if (authLoading) {
@@ -238,7 +302,7 @@ export default function ProfilePage() {
   return (
     <main className="px-24 py-12">
       {/* Header */}
-      <div className="animate-fade-in mb-10 flex items-center justify-between">
+      <div className="animate-fade-in mb-6 flex items-center justify-between">
         <div>
           <p className="mb-1 text-sm font-medium text-text-tertiary">personalized</p>
           <h1 className="text-4xl font-bold tracking-tight text-text">your profile</h1>
@@ -273,97 +337,86 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Resume upload — compact bar at top */}
-      <div className="animate-fade-in mb-8">
-        {resumeInfo ? (
-          <div className="flex items-center gap-4 rounded-xl border border-primary/20 bg-surface px-5 py-3">
-            <FileText className="h-4 w-4 shrink-0 text-primary" />
-            <p className="text-sm font-medium text-text">{resumeInfo.filename}</p>
-            <p className="text-xs text-text-tertiary">
-              Uploaded {new Date(resumeInfo.uploadedAt).toLocaleDateString()}
-            </p>
-            <div className="ml-auto flex items-center gap-3">
-              {rankStatus !== 'loading' && (
-                <button
-                  onClick={handleRank}
-                  className="rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95"
-                >
-                  rank listings for me
-                </button>
-              )}
+      {/* Resume upload — compact centered */}
+      <div className="animate-fade-in mb-8 flex justify-center">
+        <div className="w-full max-w-sm">
+          {resumeInfo ? (
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-primary/20 bg-surface px-5 py-3">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 shrink-0 text-primary" />
+                <p className="text-sm font-medium text-text">{resumeInfo.filename}</p>
+                <span className="text-xs text-text-tertiary">· {new Date(resumeInfo.uploadedAt).toLocaleDateString()}</span>
+              </div>
               <button
                 onClick={() => inputRef.current?.click()}
                 className="text-xs text-text-tertiary hover:text-primary transition-colors"
               >
                 replace
               </button>
+              <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) handleFileSelect(f)
+              }} />
             </div>
-            <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) handleFileSelect(f)
-            }} />
-          </div>
-        ) : (
-          <div
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault()
-              setIsDragging(false)
-              const f = e.dataTransfer.files?.[0]
-              if (f) handleFileSelect(f)
-            }}
-            onClick={() => inputRef.current?.click()}
-            className={[
-              'flex cursor-pointer items-center gap-4 rounded-xl border-2 border-dashed px-5 py-4 transition-all duration-200',
-              isDragging
-                ? 'border-primary bg-primary/5'
-                : 'border-text-tertiary/30 bg-surface hover:border-primary/50 hover:bg-primary/5',
-            ].join(' ')}
-          >
-            <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) handleFileSelect(f)
-            }} />
-            {uploadStatus === 'uploading' ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                <p className="text-sm text-text-tertiary">uploading & parsing...</p>
-              </>
-            ) : (
-              <>
-                <Upload className="h-5 w-5 shrink-0 text-text-tertiary" />
-                <div>
-                  <p className="text-sm font-medium text-text">drop your resume here or click to upload</p>
-                  <p className="text-xs text-text-tertiary">PDF only — profile fields will be auto-filled</p>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+          ) : (
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setIsDragging(false)
+                const f = e.dataTransfer.files?.[0]
+                if (f) handleFileSelect(f)
+              }}
+              onClick={() => inputRef.current?.click()}
+              className={[
+                'flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-5 py-4 transition-all duration-200',
+                isDragging
+                  ? 'border-primary bg-primary/5'
+                  : 'border-text-tertiary/30 bg-surface hover:border-primary/50 hover:bg-primary/5',
+              ].join(' ')}
+            >
+              <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) handleFileSelect(f)
+              }} />
+              {uploadStatus === 'uploading' ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <p className="text-xs text-text-tertiary">uploading & parsing...</p>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-5 w-5 text-text-tertiary" />
+                  <p className="text-xs text-text-tertiary text-center"><span className="font-medium text-text">Drop resume or click to upload</span><br />PDF only</p>
+                </>
+              )}
+            </div>
+          )}
 
-        {uploadStatus === 'success' && (
-          <div className="mt-2 flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/5 px-4 py-2">
-            <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-            <p className="text-xs text-green-600">Resume uploaded and parsed successfully.</p>
-          </div>
-        )}
-        {uploadStatus === 'error' && (
-          <div className="mt-2 flex items-center gap-2 rounded-lg border border-accent/20 bg-accent/5 px-4 py-2">
-            <AlertCircle className="h-3.5 w-3.5 text-accent" />
-            <p className="text-xs text-accent">{errorMsg}</p>
-          </div>
-        )}
+          {uploadStatus === 'success' && (
+            <div className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-1.5">
+              <CheckCircle className="h-3 w-3 text-green-500" />
+              <p className="text-xs text-green-600">Resume uploaded and parsed successfully.</p>
+            </div>
+          )}
+          {uploadStatus === 'error' && (
+            <div className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-accent/20 bg-accent/5 px-3 py-1.5">
+              <AlertCircle className="h-3 w-3 text-accent" />
+              <p className="text-xs text-accent">{errorMsg}</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Profile fields */}
-      <div className="animate-fade-in-up max-w-3xl" style={{ animationDelay: '100ms' }}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-text">your information</h2>
+      {/* Profile fields — application-style form */}
+      <div className="animate-fade-in-up mx-auto max-w-2xl" style={{ animationDelay: '100ms' }}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-text">Your Information</h2>
           <button
             onClick={handleSave}
             disabled={saveStatus === 'saving'}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all ${
               saveStatus === 'saved'
                 ? 'bg-green-500/10 text-green-600'
                 : saveStatus === 'error'
@@ -372,168 +425,199 @@ export default function ProfilePage() {
             }`}
           >
             {saveStatus === 'saving' ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : saveStatus === 'saved' ? (
-              <CheckCircle className="h-3.5 w-3.5" />
+              <CheckCircle className="h-4 w-4" />
             ) : (
-              <Save className="h-3.5 w-3.5" />
+              <Save className="h-4 w-4" />
             )}
-            {saveStatus === 'saved' ? 'saved' : saveStatus === 'saving' ? 'saving...' : 'save'}
+            {saveStatus === 'saved' ? 'Saved' : saveStatus === 'saving' ? 'Saving...' : 'Save'}
           </button>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-text-tertiary/10 bg-surface p-6">
+        <div className="space-y-6 rounded-2xl border border-text-tertiary/10 bg-surface p-8">
           {/* Major */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-tertiary">Major / Department</label>
+            <label className="mb-2 block text-sm font-semibold text-text">Major / Department <span className="font-normal text-text-tertiary">(required)</span></label>
             <input
               type="text"
               value={major}
               onChange={e => setMajor(e.target.value)}
               placeholder="e.g. Computer Science"
-              className={`w-full rounded-xl border border-text-tertiary/20 bg-bg px-4 py-2.5 text-sm text-text placeholder:text-text-tertiary/50 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 ${highlightRing('major')}`}
+              className={`w-full rounded-xl border border-text-tertiary/20 bg-bg px-4 py-3 text-base text-text placeholder:text-text-tertiary/50 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 ${highlightRing('major')}`}
             />
           </div>
 
           {/* Year + GPA row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-tertiary">Graduation Year</label>
+              <label className="mb-2 block text-sm font-semibold text-text">Graduation Year</label>
               <input
                 type="text"
                 value={year}
                 onChange={e => setYear(e.target.value)}
                 placeholder="e.g. 2027"
-                className={`w-full rounded-xl border border-text-tertiary/20 bg-bg px-4 py-2.5 text-sm text-text placeholder:text-text-tertiary/50 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 ${highlightRing('year')}`}
+                className={`w-full rounded-xl border border-text-tertiary/20 bg-bg px-4 py-3 text-base text-text placeholder:text-text-tertiary/50 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 ${highlightRing('year')}`}
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-tertiary">GPA</label>
+              <label className="mb-2 block text-sm font-semibold text-text">GPA</label>
               <input
                 type="text"
                 value={gpa}
                 onChange={e => setGpa(e.target.value)}
                 placeholder="e.g. 3.85"
-                className={`w-full rounded-xl border border-text-tertiary/20 bg-bg px-4 py-2.5 text-sm text-text placeholder:text-text-tertiary/50 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 ${highlightRing('gpa')}`}
+                className={`w-full rounded-xl border border-text-tertiary/20 bg-bg px-4 py-3 text-base text-text placeholder:text-text-tertiary/50 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 ${highlightRing('gpa')}`}
               />
             </div>
           </div>
 
           {/* Bio */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-tertiary">Short Bio</label>
+            <label className="mb-2 block text-sm font-semibold text-text">Short Bio</label>
             <textarea
               value={bio}
               onChange={e => setBio(e.target.value)}
-              placeholder="Tell us a bit about yourself..."
-              rows={3}
-              className="w-full rounded-xl border border-text-tertiary/20 bg-bg px-4 py-2.5 text-sm text-text placeholder:text-text-tertiary/50 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none"
+              placeholder="Tell us a bit about yourself, your research experience, and what you're looking for..."
+              rows={4}
+              className={`w-full rounded-xl border border-text-tertiary/20 bg-bg px-4 py-3 text-base text-text placeholder:text-text-tertiary/50 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none ${highlightRing('bio')}`}
             />
           </div>
 
-          {/* Skills */}
+          <hr className="border-text-tertiary/10" />
+
+          {/* Experience */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-tertiary">Skills</label>
-            <div className={`rounded-xl border border-text-tertiary/20 bg-bg p-2 transition-all ${highlightRing('skills')}`}>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {skills.map(skill => (
-                  <span key={skill} className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                    {skill}
-                    <button onClick={() => setSkills(prev => prev.filter(s => s !== skill))} className="hover:text-accent transition-colors">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <label className="block text-sm font-semibold text-text">Experience</label>
+                <p className="mt-1 text-sm text-text-tertiary">Research positions, internships, relevant work experience.</p>
+              </div>
+              {!showExpForm && (
+                <button
+                  onClick={() => { setEditingExp(null); setShowExpForm(true) }}
+                  className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </button>
+              )}
+            </div>
+
+            {experience.length > 0 && (
+              <div className={`space-y-3 mb-3 rounded-xl p-1 transition-all ${highlightRing('experience')}`}>
+                {experience.map(entry => (
+                  <div key={entry.id} className="group rounded-xl border border-text-tertiary/15 bg-bg p-4 transition-all hover:border-text-tertiary/25">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex gap-3 min-w-0">
+                        <Briefcase className="mt-0.5 h-4 w-4 shrink-0 text-text-tertiary" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-text">{entry.title}</p>
+                          <p className="text-sm text-text-tertiary">{entry.organization}</p>
+                          <p className="mt-0.5 text-xs text-text-tertiary">
+                            {entry.startDate}{entry.endDate ? ` — ${entry.endDate}` : ''}
+                          </p>
+                          {entry.description && (
+                            <p className="mt-2 text-sm text-text-tertiary leading-relaxed">{entry.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => startEditExp(entry)} className="rounded-lg p-1.5 text-text-tertiary hover:bg-primary/10 hover:text-primary transition-colors">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => removeExpEntry(entry.id)} className="rounded-lg p-1.5 text-text-tertiary hover:bg-accent/10 hover:text-accent transition-colors">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
+            )}
+
+            {showExpForm && (
+              <ExperienceForm
+                initial={editingExp}
+                onSave={saveExpEntry}
+                onCancel={() => { setEditingExp(null); setShowExpForm(false) }}
+              />
+            )}
+
+            {experience.length === 0 && !showExpForm && (
+              <div className="rounded-xl border border-dashed border-text-tertiary/20 bg-bg px-4 py-6 text-center">
+                <Briefcase className="mx-auto mb-2 h-5 w-5 text-text-tertiary/40" />
+                <p className="text-sm text-text-tertiary">No experience added yet.</p>
+              </div>
+            )}
+          </div>
+
+          <hr className="border-text-tertiary/10" />
+
+          {/* Skills */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-text">Skills</label>
+            <p className="mb-3 text-sm text-text-tertiary">Add technical skills, programming languages, lab techniques, etc.</p>
+            <div className={`rounded-xl border border-text-tertiary/20 bg-bg p-3 transition-all ${highlightRing('skills')}`}>
+              {skills.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {skills.map(skill => (
+                    <span key={skill} className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
+                      {skill}
+                      <button onClick={() => setSkills(prev => prev.filter(s => s !== skill))} className="hover:text-accent transition-colors">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={skillInput}
                   onChange={e => setSkillInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill() } }}
-                  placeholder="Add a skill..."
-                  className="flex-1 bg-transparent px-2 py-1 text-sm text-text placeholder:text-text-tertiary/50 focus:outline-none"
+                  placeholder="Type a skill and press Enter..."
+                  className="flex-1 bg-transparent px-2 py-1.5 text-sm text-text placeholder:text-text-tertiary/50 focus:outline-none"
                 />
-                <button onClick={addSkill} className="text-xs font-medium text-primary hover:text-primary-dark transition-colors">Add</button>
+                <button onClick={addSkill} className="rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors">Add</button>
               </div>
             </div>
           </div>
 
           {/* Research Interests */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-tertiary">Research Interests</label>
-            <div className={`rounded-xl border border-text-tertiary/20 bg-bg p-2 transition-all ${highlightRing('interests')}`}>
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {interests.map(interest => (
-                  <span key={interest} className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                    {interest}
-                    <button onClick={() => setInterests(prev => prev.filter(i => i !== interest))} className="hover:text-accent transition-colors">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
+            <label className="mb-2 block text-sm font-semibold text-text">Research Interests</label>
+            <p className="mb-3 text-sm text-text-tertiary">Topics and fields you'd like to explore through research.</p>
+            <div className={`rounded-xl border border-text-tertiary/20 bg-bg p-3 transition-all ${highlightRing('interests')}`}>
+              {interests.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {interests.map(interest => (
+                    <span key={interest} className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
+                      {interest}
+                      <button onClick={() => setInterests(prev => prev.filter(i => i !== interest))} className="hover:text-accent transition-colors">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={interestInput}
                   onChange={e => setInterestInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addInterest() } }}
-                  placeholder="Add an interest..."
-                  className="flex-1 bg-transparent px-2 py-1 text-sm text-text placeholder:text-text-tertiary/50 focus:outline-none"
+                  placeholder="Type an interest and press Enter..."
+                  className="flex-1 bg-transparent px-2 py-1.5 text-sm text-text placeholder:text-text-tertiary/50 focus:outline-none"
                 />
-                <button onClick={addInterest} className="text-xs font-medium text-primary hover:text-primary-dark transition-colors">Add</button>
+                <button onClick={addInterest} className="rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors">Add</button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Loading */}
-      {rankStatus === 'loading' && (
-        <div className="flex flex-col items-center gap-3 py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <p className="text-sm text-text-tertiary">analyzing your resume...</p>
-        </div>
-      )}
-
-      {/* Rank error */}
-      {rankStatus === 'error' && (
-        <div className="mt-8 flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent/5 p-5">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-          <div>
-            <p className="text-sm font-medium text-accent">Ranking failed</p>
-            <p className="mt-0.5 text-xs text-text-tertiary">{errorMsg}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Results */}
-      {rankStatus === 'success' && results.length > 0 && (
-        <div className="animate-fade-in mt-10">
-          <div className="mb-5 flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-primary" />
-            <p className="text-sm text-text-tertiary">
-              showing <span className="font-medium text-text">{results.length} listings</span> ranked by relevance to your major
-              {results[0]?.major_match && (
-                <> — <span className="font-medium text-primary">major match</span> listings appear first</>
-              )}
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {results.map((listing, i) => (
-              <div key={listing.elx_id ?? i} className="relative">
-                {listing.major_match && (
-                  <span className="absolute -top-2 -right-2 z-10 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-white shadow">
-                    major match
-                  </span>
-                )}
-                <ListingCard listing={listing as any} index={i} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </main>
   )
 }

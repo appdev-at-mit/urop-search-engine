@@ -1,5 +1,14 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 
+export interface ExperienceEntry {
+  id: string
+  title: string
+  organization: string
+  startDate: string
+  endDate: string
+  description: string
+}
+
 export interface UserProfile {
   googleId: string
   email: string
@@ -11,6 +20,7 @@ export interface UserProfile {
   skills?: string[]
   bio?: string
   gpa?: string
+  experience?: ExperienceEntry[]
 }
 
 interface AuthContextValue {
