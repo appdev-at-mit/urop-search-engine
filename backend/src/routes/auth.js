@@ -26,7 +26,7 @@ router.get('/me', async (req, res) => {
     const db = await getDb();
     const fullUser = await db.collection('users').findOne(
       { googleId: req.user.googleId },
-      { projection: { _id: 0, googleId: 1, email: 1, name: 1, picture: 1, major: 1, year: 1, interests: 1, skills: 1, bio: 1, gpa: 1 } }
+      { projection: { _id: 0, googleId: 1, email: 1, name: 1, picture: 1, major: 1, year: 1, interests: 1, skills: 1, bio: 1, gpa: 1, experience: 1 } }
     );
     res.json({ user: fullUser || { googleId: req.user.googleId, email: req.user.email, name: req.user.name, picture: req.user.picture } });
   } catch (_) {

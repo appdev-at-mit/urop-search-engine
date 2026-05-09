@@ -31,13 +31,13 @@ function requireAuth(req, res, next) {
   next();
 }
 
-const PROFILE_FIELDS = ['major', 'year', 'interests', 'skills', 'bio', 'gpa'];
+const PROFILE_FIELDS = ['major', 'year', 'interests', 'skills', 'bio', 'gpa', 'experience'];
 
-const KNOWN_SKILLS = [
-  'python', 'java', 'javascript', 'typescript', 'c\\+\\+', 'c#', 'ruby', 'go',
-  'rust', 'swift', 'kotlin', 'php', 'scala', 'r\\b', 'sql', 'html', 'css',
+const KNOWN_SKILLS_PLAIN = [
+  'python', 'java', 'javascript', 'typescript', 'ruby', 'go',
+  'rust', 'swift', 'kotlin', 'php', 'scala', 'sql', 'html', 'css',
   'matlab', 'julia', 'perl', 'bash', 'shell',
-  'react', 'angular', 'vue', 'node\\.js', 'express', 'django', 'flask',
+  'react', 'angular', 'vue', 'express', 'django', 'flask',
   'spring', 'tensorflow', 'pytorch', 'keras', 'scikit-learn', 'pandas', 'numpy',
   'docker', 'kubernetes', 'aws', 'gcp', 'azure', 'git', 'linux',
   'machine learning', 'deep learning', 'nlp', 'natural language processing',
@@ -46,24 +46,94 @@ const KNOWN_SKILLS = [
   'labview', 'simulink', 'excel', 'tableau', 'power bi',
 ];
 
+const KNOWN_SKILLS_SPECIAL = [
+  { pattern: /\bc\+\+/gi, name: 'c++' },
+  { pattern: /\bc#/gi, name: 'c#' },
+  { pattern: /\bnode\.js/gi, name: 'node.js' },
+  { pattern: /\bR(?=[\s,;|)\]}]|$)/g, name: 'r' },
+];
+
+const SECTION_HEADERS = /^(?:education|experience|projects|publications|awards|honors|activities|certifications|work|employment|leadership|references|coursework|courses)\b/im;
+
+const MONTH = '(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)';
+const DATE_TOKEN = `(?:${MONTH}\\.?\\s*\\d{4}|\\d{4}|present|current|ongoing)`;
+const DATE_RANGE_RE = new RegExp(`(${DATE_TOKEN})\\s*(?:[-–—]|to)\\s*(${DATE_TOKEN})`, 'i');
+
+const LOCATION_SUFFIX_RE = /^(.+?)((?:[A-Z][a-z]+,\s*[A-Z]{2})|Remote)$/;
+
+function extractSection(text, headerPattern) {
+  const match = text.match(headerPattern);
+  if (!match) return null;
+  let body = text.slice(match.index + match[0].length);
+  const nextHeader = body.search(SECTION_HEADERS);
+  if (nextHeader > 0) body = body.slice(0, nextHeader);
+  return body.trim();
+}
+
+function parseExperienceEntries(sectionText) {
+  const entries = [];
+  const lines = sectionText.split('\n').map(l => l.trim()).filter(Boolean);
+  let current = null;
+
+  for (const line of lines) {
+    const dateMatch = line.match(DATE_RANGE_RE);
+    const isBullet = /^[•·\u2022\-\*▪]/.test(line);
+
+    if (dateMatch && !isBullet) {
+      if (current) entries.push(current);
+      const textBeforeDate = line.slice(0, dateMatch.index).trim().replace(/[,|]+$/, '').trim();
+      current = {
+        id: randomUUID(),
+        title: '',
+        organization: '',
+        startDate: dateMatch[1],
+        endDate: dateMatch[2],
+        description: '',
+      };
+      if (textBeforeDate) current.organization = textBeforeDate;
+    } else if (current) {
+      if (isBullet) {
+        const bullet = line.replace(/^[•·\u2022\-\*▪]\s*/, '');
+        current.description += (current.description ? '\n' : '') + bullet;
+      } else if (!current.title) {
+        const locMatch = line.match(LOCATION_SUFFIX_RE);
+        current.title = locMatch ? locMatch[1].trim() : line;
+      }
+    }
+  }
+  if (current) entries.push(current);
+
+  return entries
+    .filter(e => e.title || e.organization)
+    .slice(0, 10);
+}
+
 function parseResumeText(text) {
   const parsed = {};
 
+  // Bio — extract from Summary / Objective / Profile section
+  const bioSection = extractSection(text, /^(?:summary|objective|about|profile|about\s+me)[:\s]*\n?/im);
+  if (bioSection) {
+    const bio = bioSection.split('\n').map(l => l.trim()).filter(Boolean).join(' ').slice(0, 500);
+    if (bio.length > 10) parsed.bio = bio;
+  }
+
   // GPA
-  const gpaMatch = text.match(/GPA[:\s]*(\d\.\d{1,2})/i)
-    || text.match(/(\d\.\d{1,2})\s*\/\s*4\.0/i);
+  const gpaMatch = text.match(/(?:cumulative\s+)?GPA[:\s]*(\d\.\d{1,2})/i)
+    || text.match(/(\d\.\d{1,2})\s*\/\s*4\.0{0,2}/i);
   if (gpaMatch) parsed.gpa = gpaMatch[1];
 
-  // Graduation year
-  const yearMatch = text.match(/(?:expected|class of|graduation)[:\s,]*(?:(?:spring|fall|summer|winter|may|june|december|january)\s*)?(\d{4})/i)
+  // Graduation year (handles PDFs that concatenate words: "EngineeringGraduating May 2028")
+  const yearMatch = text.match(/(?:expected|class of|graduation|graduating)\s*[:\s,]*(?:(?:spring|fall|summer|winter|may|june|december|january)\s*)?(\d{4})/i)
     || text.match(/(?:spring|fall|summer|winter|may|june|december|january)\s+(\d{4})/i);
   if (yearMatch) parsed.year = yearMatch[1];
 
-  // Major — look for degree patterns
+  // Major (including MIT's S.B. format)
   const majorPatterns = [
-    /(?:B\.?S\.?|B\.?A\.?|M\.?S\.?|M\.?A\.?|Ph\.?D\.?)\s+(?:in\s+)?(.+?)(?:\n|,|\||;|$)/im,
+    /(?:S\.?B\.?|B\.?S\.?|B\.?A\.?|M\.?S\.?|M\.?Eng\.?|M\.?A\.?|Ph\.?D\.?)\s+(?:in\s+)?(.+?)(?:\n|,|\||;|$)/im,
     /Major[:\s]+(.+?)(?:\n|,|\||;|$)/im,
     /(?:Bachelor|Master)(?:'?s?)?\s+(?:of\s+\w+\s+)?in\s+(.+?)(?:\n|,|\||;|$)/im,
+    /Course\s+(\d{1,2}(?:-\d{1,2})?)\b/i,
   ];
   for (const pattern of majorPatterns) {
     const m = text.match(pattern);
@@ -73,28 +143,51 @@ function parseResumeText(text) {
     }
   }
 
-  // Skills — match against known list + look for Skills section
-  const skillsSet = new Set();
-  const skillsPattern = new RegExp(`\\b(${KNOWN_SKILLS.join('|')})\\b`, 'gi');
-  for (const m of text.matchAll(skillsPattern)) {
-    skillsSet.add(m[1].toLowerCase().replace(/\\/, ''));
+  // Experience — structured entries
+  const expSection = extractSection(
+    text,
+    /^(?:(?:research|work|professional|relevant)\s+)?experience[:\s]*\n?/im,
+  );
+  if (expSection) {
+    const entries = parseExperienceEntries(expSection);
+    if (entries.length > 0) parsed.experience = entries;
   }
 
-  const skillsSectionMatch = text.match(/(?:skills|technical skills|technologies)[:\s]*\n?([\s\S]*?)(?:\n\s*\n|\n[A-Z])/i);
+  // Skills
+  const skillsSet = new Set();
+  const plainPattern = new RegExp(`\\b(${KNOWN_SKILLS_PLAIN.join('|')})\\b`, 'gi');
+  for (const m of text.matchAll(plainPattern)) {
+    skillsSet.add(m[1].toLowerCase());
+  }
+  for (const { pattern, name } of KNOWN_SKILLS_SPECIAL) {
+    if (pattern.test(text)) skillsSet.add(name);
+    pattern.lastIndex = 0;
+  }
+  const skillsSectionMatch = text.match(
+    /(?:skills|technical skills|technologies|proficiencies)[:\s]*\n?([\s\S]*?)(?:\n\s*\n|$)/i
+  );
   if (skillsSectionMatch) {
-    const items = skillsSectionMatch[1]
-      .split(/[,;•\-|\n]+/)
-      .map(s => s.trim())
+    let sectionText = skillsSectionMatch[1];
+    const headerIdx = sectionText.search(SECTION_HEADERS);
+    if (headerIdx > 0) sectionText = sectionText.slice(0, headerIdx);
+    const items = sectionText
+      .split(/[,;•·\u2022\-|\n:\/]+/)
+      .map(s => s.trim().replace(/^\(|\)$/g, ''))
       .filter(s => s.length > 1 && s.length < 40);
     items.forEach(s => skillsSet.add(s.toLowerCase()));
   }
   if (skillsSet.size > 0) parsed.skills = [...skillsSet].slice(0, 30);
 
-  // Research interests — look for Research section
-  const researchMatch = text.match(/(?:research\s+interests?|areas?\s+of\s+interest)[:\s]*\n?([\s\S]*?)(?:\n\s*\n|\n[A-Z])/i);
+  // Research interests
+  const researchMatch = text.match(
+    /(?:research\s+interests?|areas?\s+of\s+interest)[:\s]*\n?([\s\S]*?)(?:\n\s*\n|$)/i
+  );
   if (researchMatch) {
-    const items = researchMatch[1]
-      .split(/[,;•\-|\n]+/)
+    let sectionText = researchMatch[1];
+    const headerIdx = sectionText.search(SECTION_HEADERS);
+    if (headerIdx > 0) sectionText = sectionText.slice(0, headerIdx);
+    const items = sectionText
+      .split(/[,;•·\u2022\-|\n]+/)
       .map(s => s.trim())
       .filter(s => s.length > 2 && s.length < 60);
     if (items.length > 0) parsed.interests = items.slice(0, 15);
@@ -134,7 +227,7 @@ router.get('/', requireAuth, async (req, res) => {
     const db = await getDb();
     const user = await db.collection('users').findOne(
       { googleId: req.user.googleId },
-      { projection: { major: 1, year: 1, interests: 1, skills: 1, bio: 1, gpa: 1 } }
+      { projection: { major: 1, year: 1, interests: 1, skills: 1, bio: 1, gpa: 1, experience: 1 } }
     );
     if (!user) return res.json({ profile: null });
     const { _id, ...profile } = user;
@@ -152,13 +245,17 @@ router.post('/resume', requireAuth, upload.single('resume'), async (req, res) =>
     const db = await getDb();
     const users = db.collection('users');
 
-    // Extract text from PDF
     let parsedFields = {};
+    let parseError = null;
     try {
       const pdfData = await pdf(req.file.buffer);
-      parsedFields = parseResumeText(pdfData.text);
-    } catch (_) {
-      // PDF parsing failed — still save the file, just skip auto-fill
+      if (!pdfData.text || pdfData.text.trim().length === 0) {
+        parseError = 'Could not extract text from PDF — it may be image-based or scanned.';
+      } else {
+        parsedFields = parseResumeText(pdfData.text);
+      }
+    } catch (e) {
+      parseError = `PDF text extraction failed: ${e.message}`;
     }
 
     const updateDoc = {
@@ -169,13 +266,9 @@ router.post('/resume', requireAuth, upload.single('resume'), async (req, res) =>
       },
     };
 
-    // Only auto-fill fields that are currently empty
-    const existingUser = await users.findOne({ googleId: req.user.googleId });
+    // Auto-fill all parsed fields (overwrite previous values from resume parsing)
     for (const [key, value] of Object.entries(parsedFields)) {
-      const existing = existingUser?.[key];
-      const isEmpty = existing === undefined || existing === null || existing === ''
-        || (Array.isArray(existing) && existing.length === 0);
-      if (isEmpty) updateDoc[key] = value;
+      updateDoc[key] = value;
     }
 
     await users.updateOne(
@@ -184,7 +277,12 @@ router.post('/resume', requireAuth, upload.single('resume'), async (req, res) =>
       { upsert: true }
     );
 
-    res.json({ ok: true, filename: req.file.originalname, parsed: parsedFields });
+    res.json({
+      ok: true,
+      filename: req.file.originalname,
+      parsed: parsedFields,
+      parseError,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Failed to save resume', details: err.message });
   }
