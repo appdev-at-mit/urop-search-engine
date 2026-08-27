@@ -2,10 +2,15 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
+import * as ecrAssets from 'aws-cdk-lib/aws-ecr-assets';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as path from 'path';
+
+const DOMAIN_NAME = 'miturop.org';
 
 export class UropStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -46,6 +51,11 @@ export class UropStack extends cdk.Stack {
       clusterName: 'urop-cluster',
     });
 
+    // Existing Route 53 hosted zone for the production domain
+    const zone = route53.HostedZone.fromLookup(this, 'Zone', {
+      domainName: DOMAIN_NAME,
+    });
+
     // Fargate service with ALB
     const service = new ecsPatterns.ApplicationLoadBalancedFargateService(
       this,
@@ -56,9 +66,19 @@ export class UropStack extends cdk.Stack {
         memoryLimitMiB: 512,
         desiredCount: 1,
         assignPublicIp: true,
+        domainName: DOMAIN_NAME,
+        domainZone: zone,
+        protocol: elbv2.ApplicationProtocol.HTTPS,
+        redirectHTTP: true,
+        runtimePlatform: {
+          cpuArchitecture: ecs.CpuArchitecture.ARM64,
+          operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
+        },
+        circuitBreaker: { rollback: true },
         taskImageOptions: {
           image: ecs.ContainerImage.fromAsset(path.join(__dirname, '../..'), {
             file: 'Dockerfile',
+            platform: ecrAssets.Platform.LINUX_ARM64,
           }),
           containerPort: 3001,
           environment: {
@@ -96,15 +116,20 @@ export class UropStack extends cdk.Stack {
       'HTTPS outbound (MongoDB Atlas, Google OAuth)'
     );
 
-    // Inject ALB URL as BACKEND_URL and APP_URL so OAuth callbacks work
+    // Inject the production domain as BACKEND_URL and APP_URL so OAuth callbacks work
     const taskDef = service.taskDefinition.defaultContainer!;
-    taskDef.addEnvironment('BACKEND_URL', `http://${service.loadBalancer.loadBalancerDnsName}`);
-    taskDef.addEnvironment('APP_URL', `http://${service.loadBalancer.loadBalancerDnsName}`);
+    taskDef.addEnvironment('BACKEND_URL', `https://${DOMAIN_NAME}`);
+    taskDef.addEnvironment('APP_URL', `https://${DOMAIN_NAME}`);
 
     // Outputs
-    new cdk.CfnOutput(this, 'LoadBalancerUrl', {
-      value: `http://${service.loadBalancer.loadBalancerDnsName}`,
+    new cdk.CfnOutput(this, 'AppUrl', {
+      value: `https://${DOMAIN_NAME}`,
       description: 'Application URL',
+    });
+
+    new cdk.CfnOutput(this, 'LoadBalancerDns', {
+      value: service.loadBalancer.loadBalancerDnsName,
+      description: 'ALB DNS name (target of the Route 53 A-record)',
     });
 
     new cdk.CfnOutput(this, 'SecretArn', {
