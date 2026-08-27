@@ -37,6 +37,20 @@ export function opportunityCardClass(kind: OpportunityKind): string {
   }
 }
 
+/** Single accent hex per kind, used by the redesigned card variants (border/shadow/badge fills). */
+export function opportunityAccentHex(kind: OpportunityKind): string {
+  switch (kind) {
+    case 'urop':
+      return '#4da692'
+    case 'global':
+      return '#0369a1'
+    case 'not_urop':
+      return '#b45309'
+    default:
+      return '#8b8b9e'
+  }
+}
+
 export function opportunityBadgeClass(kind: OpportunityKind): string {
   switch (kind) {
     case 'urop':
