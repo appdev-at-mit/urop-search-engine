@@ -57,36 +57,40 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: `${process.env.BACKEND_URL || 'http://localhost:3001'}/auth/google/callback`,
-}, async (_accessToken, _refreshToken, profile, done) => {
-  try {
-    const db = await getDb();
-    const users = db.collection('users');
-    const email = profile.emails?.[0]?.value || '';
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${process.env.BACKEND_URL || 'http://localhost:3001'}/auth/google/callback`,
+  }, async (_accessToken, _refreshToken, profile, done) => {
+    try {
+      const db = await getDb();
+      const users = db.collection('users');
+      const email = profile.emails?.[0]?.value || '';
 
-    await users.updateOne(
-      { googleId: profile.id },
-      {
-        $set: {
-          googleId: profile.id,
-          email,
-          name: profile.displayName,
-          picture: profile.photos?.[0]?.value,
-          lastLogin: new Date(),
+      await users.updateOne(
+        { googleId: profile.id },
+        {
+          $set: {
+            googleId: profile.id,
+            email,
+            name: profile.displayName,
+            picture: profile.photos?.[0]?.value,
+            lastLogin: new Date(),
+          },
         },
-      },
-      { upsert: true }
-    );
+        { upsert: true }
+      );
 
-    const user = await users.findOne({ googleId: profile.id });
-    return done(null, user);
-  } catch (err) {
-    return done(err);
-  }
-}));
+      const user = await users.findOne({ googleId: profile.id });
+      return done(null, user);
+    } catch (err) {
+      return done(err);
+    }
+  }));
+} else {
+  console.warn('GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET not set — Google login is disabled.');
+}
 
 passport.serializeUser((user, done) => {
   done(null, user.googleId);
