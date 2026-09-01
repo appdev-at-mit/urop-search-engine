@@ -7,61 +7,111 @@
 const EMAIL_RE = /\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
 
 /**
- * ELx's own /lookups department list doesn't cover every department id in
- * use — an unmapped id used to leak through as a raw code (e.g. "AEROASTRO",
- * "SCHOOL_ENG"). Fills in the display name for known ids so they render the
- * same "Long form (ACRONYM)" way as the ones ELx does resolve.
+ * ELx's /lookups department text is not stable: the same real department id
+ * can come back as a bare acronym on one scrape and a full (sometimes
+ * differently-worded) long form on another, and some ids aren't in
+ * /lookups at all and leak through as a raw code (e.g. "AEROASTRO"). Rather
+ * than key off which id produced which text, this normalizes by whatever
+ * variant text shows up — every key is a known spelling (lowercased),
+ * mapped to one canonical "Long form (ACRONYM)" string.
  */
-const DEPT_ID_FALLBACKS = {
-  AEROASTRO: 'Aeronautics and Astronautics (AeroAstro)',
-  ARCH: 'Architecture',
-  'B&CS': 'Brain & Cognitive Sciences (BCS)',
-  BIOENG: 'Biological Engineering (BioE)',
-  BIOLOGY: 'Biology',
-  CHEME: 'Chemical Engineering (ChemE)',
-  CIS: 'Center for International Studies (CIS)',
-  CMS: 'Comparative Media Studies/Writing (CMS)',
-  CTL: 'Center for Transportation & Logistics (CTL)',
-  'D-LAB': 'MIT D-Lab',
-  DUSP: 'Urban Studies & Planning (DUSP)',
-  ECO: 'Economics',
-  EDGERTON: 'Edgerton Center',
-  HISTORY: 'History',
-  KI: 'Koch Institute for Integrative Cancer Research (KI)',
-  'L&P': 'Linguistics & Philosophy',
-  MATHS: 'Mathematics',
-  MECHE: 'Mechanical Engineering (MechE)',
-  MEDIA: 'Media Lab (MAS)',
-  MISTI: 'MIT International Science and Technology Initiatives (MISTI)',
-  OLE: 'Open Learning Enterprise',
-  PILM: 'Picower Institute for Learning and Memory (PILM)',
-  POLSCI: 'Political Science',
-  SCHOOL_ENG: 'School of Engineering',
-  SCM: 'Supply Chain Management (SCM)',
-  SLOAN: 'Sloan School of Management (Sloan)',
-  STS: 'Science, Technology, and Society (STS)',
-  VPEC: 'Vice President for Energy and Climate (VPEC)',
+const DEPT_CANONICAL_BY_VARIANT = {
+  aeroastro: 'Aeronautics and Astronautics (AeroAstro)',
+  'aeronautics and astronautics': 'Aeronautics and Astronautics (AeroAstro)',
+  arch: 'Architecture',
+  architecture: 'Architecture',
+  'b&cs': 'Brain and Cognitive Sciences (BCS)',
+  bcs: 'Brain and Cognitive Sciences (BCS)',
+  'brain & cognitive sciences': 'Brain and Cognitive Sciences (BCS)',
+  'brain and cognitive sciences': 'Brain and Cognitive Sciences (BCS)',
+  bioeng: 'Biological Engineering (BioE)',
+  bioe: 'Biological Engineering (BioE)',
+  'biological engineering': 'Biological Engineering (BioE)',
+  biology: 'Biology',
+  cee: 'Civil and Environmental Engineering (CEE)',
+  'civil & environmental engineering': 'Civil and Environmental Engineering (CEE)',
+  'civil and environmental engineering': 'Civil and Environmental Engineering (CEE)',
+  cheme: 'Chemical Engineering (ChemE)',
+  'chemical engineering': 'Chemical Engineering (ChemE)',
+  chemistry: 'Chemistry',
+  cis: 'Center for International Studies (CIS)',
+  'center for international studies': 'Center for International Studies (CIS)',
+  'center for international studies (cis)': 'Center for International Studies (CIS)',
+  cms: 'Comparative Media Studies/Writing (CMS)',
+  'comparative media studies/writing': 'Comparative Media Studies/Writing (CMS)',
+  csail: 'Computer Science and Artificial Intelligence Laboratory (CSAIL)',
+  'computer sci. & artificial int lab (csail)': 'Computer Science and Artificial Intelligence Laboratory (CSAIL)',
+  ctl: 'Center for Transportation and Logistics (CTL)',
+  'center for transportation & logistics': 'Center for Transportation and Logistics (CTL)',
+  'center for transportation and logistics (ctl)': 'Center for Transportation and Logistics (CTL)',
+  'd-lab': 'MIT D-Lab',
+  dusp: 'Urban Studies and Planning (DUSP)',
+  'urban studies & planning (dusp)': 'Urban Studies and Planning (DUSP)',
+  eco: 'Economics',
+  economics: 'Economics',
+  edgerton: 'Edgerton Center',
+  'edgerton center': 'Edgerton Center',
+  eaps: 'Earth, Atmospheric and Planetary Sciences (EAPS)',
+  'earth, atmospheric & planetary sci (eaps)': 'Earth, Atmospheric and Planetary Sciences (EAPS)',
+  eecs: 'Electrical Engineering and Computer Science (EECS)',
+  'electrical eng & computer sci (eecs)': 'Electrical Engineering and Computer Science (EECS)',
+  history: 'History',
+  imes: 'Institute for Medical Engineering and Science (IMES)',
+  'institute for medical engineering and science (imes)': 'Institute for Medical Engineering and Science (IMES)',
+  'kavli inst for astrophysics & space research': 'Kavli Institute for Astrophysics and Space Research',
+  ki: 'Koch Institute for Integrative Cancer Research (KI)',
+  'koch inst for integrative cancer res': 'Koch Institute for Integrative Cancer Research (KI)',
+  'l&p': 'Linguistics and Philosophy (L&P)',
+  'linguistics & philosophy': 'Linguistics and Philosophy (L&P)',
+  lids: 'Laboratory for Information and Decision Systems (LIDS)',
+  'laboratory for information & decision systems (lids)': 'Laboratory for Information and Decision Systems (LIDS)',
+  lns: 'Laboratory for Nuclear Science (LNS)',
+  'laboratory for nuclear sci (lns)': 'Laboratory for Nuclear Science (LNS)',
+  maths: 'Mathematics',
+  mathematics: 'Mathematics',
+  meche: 'Mechanical Engineering (MechE)',
+  'mechanical engineering': 'Mechanical Engineering (MechE)',
+  media: 'Media Lab (MAS)',
+  'media lab (mas)': 'Media Lab (MAS)',
+  'media lab': 'Media Lab (MAS)',
+  misti: 'MIT International Science and Technology Initiatives (MISTI)',
+  mitei: 'MIT Energy Initiative (MITEI)',
+  'mit energy initiative (mitei)': 'MIT Energy Initiative (MITEI)',
+  dmse: 'Materials Science and Engineering (DMSE)',
+  mse: 'Materials Science and Engineering (MSE)',
+  'dept material science and engineering (dmse)': 'Materials Science and Engineering (DMSE)',
+  nse: 'Nuclear Science and Engineering (NSE)',
+  ole: 'Open Learning Enterprise',
+  'open learning enterprise': 'Open Learning Enterprise',
+  pilm: 'Picower Institute for Learning and Memory (PILM)',
+  'picower inst for learning & memory': 'Picower Institute for Learning and Memory (PILM)',
+  physics: 'Physics',
+  polsci: 'Political Science',
+  'political science': 'Political Science',
+  psfc: 'Plasma Science and Fusion Center (PSFC)',
+  'plasma science & fusion center (psfc)': 'Plasma Science and Fusion Center (PSFC)',
+  rle: 'Research Laboratory of Electronics (RLE)',
+  'research lab for electronics (rle)': 'Research Laboratory of Electronics (RLE)',
+  school_eng: 'School of Engineering',
+  'school of engineering': 'School of Engineering',
+  scm: 'Supply Chain Management (SCM)',
+  'supply chain management program (scm)': 'Supply Chain Management (SCM)',
+  sloan: 'Sloan School of Management (Sloan)',
+  'sloan school of management': 'Sloan School of Management (Sloan)',
+  sts: 'Science, Technology, and Society (STS)',
+  'program in science, technology, and society': 'Science, Technology, and Society (STS)',
+  vpec: 'Vice President for Energy and Climate (VPEC)',
+  'vice president for energy and climate': 'Vice President for Energy and Climate (VPEC)',
+  idss: 'Institute for Data, Systems, and Society (IDSS)',
 };
 
-/**
- * ELx sometimes has two department ids for the same real department/lab —
- * one resolves (via /lookups) to a proper long form, the other to a bare
- * acronym. Normalizes any exact bare-acronym hit to the same long form,
- * regardless of which id produced it.
- */
-const BARE_ACRONYM_LONG_FORMS = {
-  CEE: 'Civil and Environmental Engineering (CEE)',
-  CSAIL: 'Computer Science and Artificial Intelligence Laboratory (CSAIL)',
-  DMSE: 'Materials Science and Engineering (DMSE)',
-  EAPS: 'Earth, Atmospheric and Planetary Sciences (EAPS)',
-  EECS: 'Electrical Engineering and Computer Science (EECS)',
-  IMES: 'Institute for Medical Engineering and Science (IMES)',
-  LIDS: 'Laboratory for Information and Decision Systems (LIDS)',
-  LNS: 'Laboratory for Nuclear Science (LNS)',
-  MITEI: 'MIT Energy Initiative (MITEI)',
-  PSFC: 'Plasma Science and Fusion Center (PSFC)',
-  RLE: 'Research Laboratory of Electronics (RLE)',
-};
+/** Normalizes one "X / Y" joint-affiliation department string part by part. */
+function canonicalizeDeptName(rawText) {
+  return rawText
+    .split(' / ')
+    .map((part) => DEPT_CANONICAL_BY_VARIANT[part.trim().toLowerCase()] || part.trim())
+    .join(' / ');
+}
 
 /** MIT ELx /lookups compensations → pay category */
 export function buildCompensationCategoryMap(lookupsBody) {
@@ -166,8 +216,7 @@ export function mapElxListing(raw, deptMap, compLookup) {
 
   const deptId = dept.id || '';
   const rawDeptId = deptId.replace(/^D_/, '');
-  const resolvedDeptName = deptMap[deptId] || DEPT_ID_FALLBACKS[rawDeptId] || rawDeptId;
-  const deptName = BARE_ACRONYM_LONG_FORMS[resolvedDeptName] || resolvedDeptName;
+  const deptName = canonicalizeDeptName(deptMap[deptId] || rawDeptId);
 
   const structuredPay = payCreditFromStructured(raw.compensation, compLookup);
   const pay_or_credit = structuredPay ?? inferPayOrCredit(overview, tagline);
