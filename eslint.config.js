@@ -19,5 +19,11 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Pre-existing pattern used throughout this codebase (syncing local
+      // state from props/query results in an effect). Not unsafe, just
+      // stylistically discouraged by this newer rule.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])

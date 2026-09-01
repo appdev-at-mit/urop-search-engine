@@ -67,8 +67,8 @@ export default function AdminPage() {
       setStatus(data)
       setAuthenticated(true)
       localStorage.setItem('admin_key', adminKey)
-    } catch (err: any) {
-      setStatusError(err.message)
+    } catch (err) {
+      setStatusError(err instanceof Error ? err.message : String(err))
       setAuthenticated(false)
     } finally {
       setStatusLoading(false)
@@ -93,8 +93,8 @@ export default function AdminPage() {
       setTokenMsg({ ok: true, text: `Token saved. Expires ${formatDate(data.expiresAt)}` })
       setToken('')
       fetchStatus()
-    } catch (err: any) {
-      setTokenMsg({ ok: false, text: err.message })
+    } catch (err) {
+      setTokenMsg({ ok: false, text: err instanceof Error ? err.message : String(err) })
     } finally {
       setTokenSaving(false)
     }
@@ -115,8 +115,8 @@ export default function AdminPage() {
         text: `Done: ${data.inserted} new, ${data.updated} updated, ${data.total} total listings`,
       })
       fetchStatus()
-    } catch (err: any) {
-      setRefreshMsg({ ok: false, text: err.message })
+    } catch (err) {
+      setRefreshMsg({ ok: false, text: err instanceof Error ? err.message : String(err) })
     } finally {
       setRefreshing(false)
     }

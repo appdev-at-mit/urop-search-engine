@@ -50,10 +50,36 @@ python scripts/scrape_dom.py
 If no clean API endpoint exists, this script scrapes the rendered page using
 Playwright locators.
 
+## Automated token refresh (GitHub Actions)
+
+The backend's `node-cron` job (daily, 6 AM UTC) needs a fresh Cognito token,
+which normally expires after ~24h. Instead of manually pasting a new one
+every day, `scripts/refresh_token.py` replays your saved MIT SSO session
+headlessly, captures the token the ELx SPA mints on page load, and pushes it
+to the backend via `POST /api/admin/elx-token`. A scheduled workflow
+(`.github/workflows/elx-token-refresh.yml`) runs this daily at 05:30 UTC.
+
+This only works as long as the underlying MIT Touchstone/Duo session in your
+saved state is still valid (typically weeks) — no more frequent human login
+is needed than that.
+
+**One-time setup:**
+
+```bash
+python scripts/login_once.py                       # log in through Duo once
+base64 -i auth/mit_elx_state.json | pbcopy          # macOS; use base64 -w0 on Linux
+gh secret set ELX_STATE_B64                         # paste the clipboard contents
+gh secret set ADMIN_SECRET                          # same value as in AWS Secrets Manager
+```
+
 ## Re-authenticating
 
 If a script reports you've been logged out (redirect to login page), re-run
-`login_once.py` to refresh the state file, then run your scraper again.
+`login_once.py` to refresh the state file, then run your scraper again. For
+the scheduled workflow, also re-run the `base64` + `gh secret set ELX_STATE_B64`
+steps above so the new session reaches GitHub Actions. GitHub emails the repo
+owner automatically if a scheduled workflow run fails, so you'll be notified
+when this happens.
 
 ## Files
 

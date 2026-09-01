@@ -1,0 +1,35 @@
+name: Refresh ELx token
+
+on:
+  schedule:
+    # 05:30 UTC daily — 30 min before the backend's 6 AM UTC scrape cron
+    - cron: '30 5 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: elx-token-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: elx_scraper
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Refresh token
+        working-directory: elx_scraper
+        env:
+          ELX_STATE_B64: ${{ secrets.ELX_STATE_B64 }}
+          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+          BACKEND_URL: https://miturop.org
+        run: python scripts/refresh_token.py

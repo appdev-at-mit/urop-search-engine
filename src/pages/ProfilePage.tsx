@@ -36,7 +36,7 @@ async function uploadResume(file: File): Promise<{ filename: string; parsed: Par
   if (!res.ok) {
     const text = await res.text()
     let msg = 'Upload failed'
-    try { msg = JSON.parse(text).error || msg } catch {}
+    try { msg = JSON.parse(text).error || msg } catch { /* response wasn't JSON, use default message */ }
     throw new Error(msg)
   }
   const data = await res.json()
