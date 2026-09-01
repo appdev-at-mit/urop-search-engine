@@ -5,11 +5,18 @@ state so you only log in once, then reuses the session for automated runs.
 
 ## Setup
 
+Use a virtualenv — Homebrew/system Python is "externally managed" and a bare
+`pip install` fails with `error: externally-managed-environment`.
+
 ```bash
 cd elx_scraper
-pip install -r requirements.txt
-playwright install
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/playwright install chromium
 ```
+
+Run the scripts below with `.venv/bin/python` (or `source .venv/bin/activate`
+first and plain `python` works).
 
 ## Usage
 
