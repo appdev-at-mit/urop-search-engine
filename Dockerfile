@@ -15,8 +15,10 @@ COPY backend/package.json backend/package-lock.json ./
 RUN npm ci --omit=dev
 
 # Stage 3: Production image
-FROM node:20-alpine
-RUN apk add --no-cache python3 py3-pip
+# glibc base (not alpine) — scikit-learn publishes manylinux wheels but no
+# musllinux ones, so it would otherwise need to compile from source.
+FROM node:20-slim
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 COPY --from=frontend-build /app/dist ./dist
