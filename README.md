@@ -283,6 +283,10 @@ Production runs on **AWS ECS Fargate** behind an Application Load Balancer, prov
 | Logs | CloudWatch, 1-week retention |
 | Region | `us-east-1` |
 
+Every push to `main` runs `.github/workflows/deploy.yml`: install + build + lint the frontend, then `cdk deploy` via a GitHub Actions OIDC role (`github-actions-urop-deploy`) scoped to this repo's `main` branch — no long-lived AWS credentials are stored in GitHub. Trigger a deploy manually from the Actions tab (`workflow_dispatch`) if needed.
+
+To deploy from your own machine instead:
+
 ```bash
 cd infra
 npm install
