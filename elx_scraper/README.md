@@ -57,7 +57,8 @@ which normally expires after ~24h. Instead of manually pasting a new one
 every day, `scripts/refresh_token.py` replays your saved MIT SSO session
 headlessly, captures the token the ELx SPA mints on page load, and pushes it
 to the backend via `POST /api/admin/elx-token`. A scheduled workflow
-(`.github/workflows/elx-token-refresh.yml`) runs this daily at 05:30 UTC.
+(`.github/workflows/elx-token-refresh.yml`) runs this daily at 03:00 UTC, three
+hours ahead of the scrape so a late-firing scheduled run still lands in time.
 
 This only works as long as the underlying MIT Touchstone/Duo session in your
 saved state is still valid (typically weeks) — no more frequent human login

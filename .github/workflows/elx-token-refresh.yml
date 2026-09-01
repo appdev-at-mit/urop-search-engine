@@ -2,8 +2,12 @@ name: Refresh ELx token
 
 on:
   schedule:
-    # 05:30 UTC daily — 30 min before the backend's 6 AM UTC scrape cron
-    - cron: '30 5 * * *'
+    # 03:00 UTC daily, three hours ahead of the backend's 06:00 UTC scrape.
+    # GitHub does not guarantee scheduled runs fire on time — delays of 10-30+
+    # minutes are common at peak — and a late refresh means the scrape finds no
+    # valid token and silently skips. The token lasts ~24h, so refreshing early
+    # costs nothing and buys slack for a delayed or retried run.
+    - cron: '0 3 * * *'
   workflow_dispatch: {}
 
 concurrency:
