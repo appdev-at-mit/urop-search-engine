@@ -252,7 +252,7 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <main className="mx-auto max-w-lg px-24 py-24 text-center">
+      <main className="mx-auto max-w-lg px-6 py-20 text-center sm:px-12">
         <div className="animate-fade-in">
           <div className="mb-6 flex justify-center">
             <div className="rounded-2xl bg-surface p-5">
@@ -300,7 +300,7 @@ export default function ProfilePage() {
     parsedHighlight.has(field) ? 'ring-2 ring-primary/40 bg-primary/5' : ''
 
   return (
-    <main className="px-24 py-12">
+    <main className="px-6 py-12 sm:px-12 lg:px-20">
       {/* Header */}
       <div className="animate-fade-in mb-6 flex items-center justify-between">
         <div>

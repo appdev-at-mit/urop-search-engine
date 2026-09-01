@@ -38,7 +38,7 @@ export default function LabDetailPage() {
 
   if (isError || !lab) {
     return (
-      <main className="mx-auto max-w-6xl px-24 py-20 text-center">
+      <main className="mx-auto max-w-6xl px-6 py-20 text-center sm:px-12 lg:px-20">
         <p className="font-medium text-text">Lab not found</p>
         <Link to="/labs" className="mt-4 inline-block text-base text-primary hover:underline">
           Back to labs
@@ -48,7 +48,7 @@ export default function LabDetailPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-24 py-12">
+    <main className="mx-auto max-w-6xl px-6 py-12 sm:px-12 lg:px-20">
       <Link
         to="/labs"
         className="animate-fade-in mb-8 inline-flex items-center gap-2 text-base text-text-tertiary transition-colors hover:text-primary"

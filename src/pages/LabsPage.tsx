@@ -80,7 +80,7 @@ export default function LabsPage() {
   const departments = filterOptions?.departments ?? []
 
   return (
-    <main className="px-24 py-12">
+    <main className="px-6 py-12 sm:px-12 lg:px-20">
       <div className="animate-fade-in mb-2">
         <p className="mb-1 text-base font-medium text-text-tertiary">
           discover

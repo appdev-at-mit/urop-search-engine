@@ -70,13 +70,13 @@ export default function HomePage() {
   return (
     <main>
       {/* Hero */}
-      <section className="relative z-10 px-24 pb-12 pt-20">
+      <section className="relative z-10 px-6 pb-10 pt-14 sm:px-12 lg:px-20">
         <div className="mx-auto max-w-5xl text-center">
           <div className="animate-fade-in-up">
             <p className="mb-4 text-base font-medium uppercase tracking-wide text-text-tertiary">
               mit undergraduate research opportunities
             </p>
-            <h1 className="mb-6 text-5xl font-bold leading-[1.1] tracking-tight text-text sm:text-7xl">
+            <h1 className="mb-6 text-4xl font-bold leading-[1.1] tracking-tight text-text sm:text-5xl lg:text-6xl">
               find your next
               <br />
               <span className="rotating-texts">
@@ -87,7 +87,7 @@ export default function HomePage() {
                 <span className="rotate-word">project.</span>
               </span>
             </h1>
-            <p className="mx-auto mb-12 max-w-2xl text-xl leading-relaxed text-text-secondary">
+            <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-text-secondary">
               search across MIT research opportunities. match your skills with
               labs, professors, and projects that need you.
             </p>
@@ -105,7 +105,7 @@ export default function HomePage() {
 
       {/* Personalized / Recent Listings */}
       {previewListings.length > 0 && (
-        <section className="px-24 pb-20">
+        <section className="px-6 pb-16 sm:px-12 lg:px-20">
           <div>
             <div className="rounded-2xl bg-surface p-8 sm:p-10">
               <SectionDots />
@@ -152,7 +152,7 @@ export default function HomePage() {
 
       {/* Recommended Labs */}
       {recommendedLabs.length > 0 && labsPersonalized && (
-        <section className="px-24 pb-20">
+        <section className="px-6 pb-16 sm:px-12 lg:px-20">
           <div>
             <div className="rounded-2xl bg-surface p-8 sm:p-10">
               <SectionDots />
@@ -185,7 +185,7 @@ export default function HomePage() {
       )}
 
       {/* Footer */}
-      <footer className="px-24 pb-10 pt-4">
+      <footer className="px-6 pb-10 pt-4 sm:px-12 lg:px-20">
         <div className="flex items-center justify-between">
           <p className="text-base text-text-tertiary">urop search</p>
           <p className="text-base text-text-tertiary">built for MIT students</p>

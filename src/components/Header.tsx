@@ -34,10 +34,10 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b-4 border-border bg-bg/80 backdrop-blur-lg">
-      <div className="mx-auto flex min-h-[4.5rem] items-center justify-between px-24 py-3">
+      <div className="mx-auto flex min-h-16 items-center justify-between px-6 py-3 sm:px-12 lg:px-20">
         <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-70">
-          <img src="/logo.png" alt="UROP Search logo" className="h-27 w-25" />
-          <span className="text-2xl font-bold tracking-tight text-primary">urop search</span>
+          <img src="/logo.png" alt="UROP Search logo" className="h-10 w-10" />
+          <span className="text-xl font-bold tracking-tight text-primary">urop search</span>
         </Link>
 
         <nav className="flex items-center gap-8">
@@ -45,7 +45,7 @@ export default function Header() {
             <Link
               key={link.to}
               to={link.to}
-              className={`text-lg transition-colors ${
+              className={`text-base transition-colors ${
                 location.pathname === link.to
                   ? 'font-semibold text-text'
                   : 'font-medium text-text-secondary hover:text-text'
