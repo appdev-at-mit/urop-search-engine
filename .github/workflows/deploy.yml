@@ -44,6 +44,12 @@ jobs:
         working-directory: infra
         run: npm ci
 
+      # The Fargate task runs linux/arm64 (Graviton); the runner is amd64, so
+      # the Docker image build needs QEMU emulation to cross-build for arm64.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::319797800703:role/github-actions-urop-deploy
