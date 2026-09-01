@@ -30,7 +30,10 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    # The Fargate task runs linux/arm64 (Graviton). QEMU-emulated cross-builds
+    # on an amd64 runner hung indefinitely (esbuild/vite doesn't play well
+    # with binfmt emulation), so this builds natively on an arm64 runner instead.
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
 
@@ -43,12 +46,6 @@ jobs:
       - name: Install CDK dependencies
         working-directory: infra
         run: npm ci
-
-      # The Fargate task runs linux/arm64 (Graviton); the runner is amd64, so
-      # the Docker image build needs QEMU emulation to cross-build for arm64.
-      - uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
