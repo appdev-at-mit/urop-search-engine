@@ -31,6 +31,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const APP_URL = process.env.APP_URL || 'http://localhost:5173';
 
+// The ALB terminates TLS and forwards plain HTTP to this container, so without
+// trusting its X-Forwarded-Proto header req.secure is always false — and
+// express-session then silently declines to send the `secure` session cookie
+// below, which broke Google login entirely in production. 1 = trust exactly
+// one hop (the ALB), rather than `true`, which would let clients spoof
+// X-Forwarded-For.
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: APP_URL,
   credentials: true,
