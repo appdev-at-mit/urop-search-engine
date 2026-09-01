@@ -70,7 +70,7 @@ export default function HomePage() {
   return (
     <main>
       {/* Hero */}
-      <section className="relative z-10 px-24 pb-28 pt-36">
+      <section className="relative z-10 px-24 pb-12 pt-20">
         <div className="mx-auto max-w-5xl text-center">
           <div className="animate-fade-in-up">
             <p className="mb-4 text-base font-medium uppercase tracking-wide text-text-tertiary">
