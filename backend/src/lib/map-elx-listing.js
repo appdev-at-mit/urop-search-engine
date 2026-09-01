@@ -43,6 +43,26 @@ const DEPT_ID_FALLBACKS = {
   VPEC: 'Vice President for Energy and Climate (VPEC)',
 };
 
+/**
+ * ELx sometimes has two department ids for the same real department/lab —
+ * one resolves (via /lookups) to a proper long form, the other to a bare
+ * acronym. Normalizes any exact bare-acronym hit to the same long form,
+ * regardless of which id produced it.
+ */
+const BARE_ACRONYM_LONG_FORMS = {
+  CEE: 'Civil and Environmental Engineering (CEE)',
+  CSAIL: 'Computer Science and Artificial Intelligence Laboratory (CSAIL)',
+  DMSE: 'Materials Science and Engineering (DMSE)',
+  EAPS: 'Earth, Atmospheric and Planetary Sciences (EAPS)',
+  EECS: 'Electrical Engineering and Computer Science (EECS)',
+  IMES: 'Institute for Medical Engineering and Science (IMES)',
+  LIDS: 'Laboratory for Information and Decision Systems (LIDS)',
+  LNS: 'Laboratory for Nuclear Science (LNS)',
+  MITEI: 'MIT Energy Initiative (MITEI)',
+  PSFC: 'Plasma Science and Fusion Center (PSFC)',
+  RLE: 'Research Laboratory of Electronics (RLE)',
+};
+
 /** MIT ELx /lookups compensations → pay category */
 export function buildCompensationCategoryMap(lookupsBody) {
   const map = new Map();
@@ -146,7 +166,8 @@ export function mapElxListing(raw, deptMap, compLookup) {
 
   const deptId = dept.id || '';
   const rawDeptId = deptId.replace(/^D_/, '');
-  const deptName = deptMap[deptId] || DEPT_ID_FALLBACKS[rawDeptId] || rawDeptId;
+  const resolvedDeptName = deptMap[deptId] || DEPT_ID_FALLBACKS[rawDeptId] || rawDeptId;
+  const deptName = BARE_ACRONYM_LONG_FORMS[resolvedDeptName] || resolvedDeptName;
 
   const structuredPay = payCreditFromStructured(raw.compensation, compLookup);
   const pay_or_credit = structuredPay ?? inferPayOrCredit(overview, tagline);
