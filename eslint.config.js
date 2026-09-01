@@ -6,7 +6,10 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // cdk.out holds ~1GB of synthesized asset bundles (vendored node_modules
+  // included), which made a local `npm run lint` hang for minutes. CI never
+  // noticed because a fresh checkout has no cdk.out.
+  globalIgnores(['dist', 'infra/cdk.out', '**/node_modules']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
