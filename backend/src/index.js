@@ -64,25 +64,27 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     callbackURL: `${process.env.BACKEND_URL || 'http://localhost:3001'}/auth/google/callback`,
   }, async (_accessToken, _refreshToken, profile, done) => {
     try {
-      const db = await getDb();
-      const users = db.collection('users');
       const email = profile.emails?.[0]?.value || '';
+      const user = await withRetry(async () => {
+        const db = await getDb();
+        const users = db.collection('users');
 
-      await users.updateOne(
-        { googleId: profile.id },
-        {
-          $set: {
-            googleId: profile.id,
-            email,
-            name: profile.displayName,
-            picture: profile.photos?.[0]?.value,
-            lastLogin: new Date(),
+        await users.updateOne(
+          { googleId: profile.id },
+          {
+            $set: {
+              googleId: profile.id,
+              email,
+              name: profile.displayName,
+              picture: profile.photos?.[0]?.value,
+              lastLogin: new Date(),
+            },
           },
-        },
-        { upsert: true }
-      );
+          { upsert: true }
+        );
 
-      const user = await users.findOne({ googleId: profile.id });
+        return users.findOne({ googleId: profile.id });
+      }, { attempts: 3, maxDelayMs: 2000 });
       return done(null, user);
     } catch (err) {
       return done(err);
@@ -129,19 +131,23 @@ if (process.env.NODE_ENV === 'production') {
 // A transient Atlas blip used to kill the container outright, and ECS then
 // spent minutes draining and replacing it. Retry a few times first, but still
 // give up eventually so genuinely bad credentials fail loudly.
-async function connectWithRetry(attempts = 5) {
+async function withRetry(fn, { attempts, maxDelayMs = 8000 } = {}) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      return await connectToDatabase();
+      return await fn();
     } catch (error) {
       if (attempt === attempts) throw error;
-      const delayMs = Math.min(1000 * 2 ** (attempt - 1), 8000);
+      const delayMs = Math.min(1000 * 2 ** (attempt - 1), maxDelayMs);
       console.warn(
-        `Database connection attempt ${attempt}/${attempts} failed (${error.message}); retrying in ${delayMs}ms`,
+        `Retry ${attempt}/${attempts} failed (${error.message}); retrying in ${delayMs}ms`,
       );
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
+}
+
+async function connectWithRetry() {
+  return withRetry(() => connectToDatabase(), { attempts: 5 });
 }
 
 async function startServer() {
