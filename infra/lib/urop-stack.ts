@@ -104,11 +104,22 @@ export class UropStack extends cdk.Stack {
       }
     );
 
-    // Health check on the API endpoint
+    // Health check on the API endpoint. Tightened from the CDK defaults
+    // (5 passes × 30s = 150s before a task joins the load balancer) so a new
+    // task starts serving in ~30s instead.
     service.targetGroup.configureHealthCheck({
       path: '/api/health',
       healthyHttpCodes: '200',
+      interval: cdk.Duration.seconds(15),
+      timeout: cdk.Duration.seconds(5),
+      healthyThresholdCount: 2,
+      unhealthyThresholdCount: 3,
     });
+
+    // Drain time for a task leaving the load balancer. The AWS default of 300s
+    // dominated deploy wall-clock — every rollout waited 5 minutes per draining
+    // task. Requests here are short-lived, so 30s is ample.
+    service.targetGroup.setAttribute('deregistration_delay.timeout_seconds', '30');
 
     // Allow outbound to MongoDB Atlas and Google OAuth
     service.service.connections.allowToAnyIpv4(

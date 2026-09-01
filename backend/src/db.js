@@ -22,8 +22,10 @@ export async function connectToDatabase() {
     client = new MongoClient(mongoUri, {
       minPoolSize: 2,
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000,
+      // A cold Fargate task's first TLS handshake to Atlas can exceed 5s,
+      // which used to kill the container on startup.
+      serverSelectionTimeoutMS: 15000,
+      connectTimeoutMS: 15000,
     });
   }
 

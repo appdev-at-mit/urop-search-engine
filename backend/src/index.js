@@ -126,8 +126,26 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// A transient Atlas blip used to kill the container outright, and ECS then
+// spent minutes draining and replacing it. Retry a few times first, but still
+// give up eventually so genuinely bad credentials fail loudly.
+async function connectWithRetry(attempts = 5) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await connectToDatabase();
+    } catch (error) {
+      if (attempt === attempts) throw error;
+      const delayMs = Math.min(1000 * 2 ** (attempt - 1), 8000);
+      console.warn(
+        `Database connection attempt ${attempt}/${attempts} failed (${error.message}); retrying in ${delayMs}ms`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
 async function startServer() {
-  await connectToDatabase();
+  await connectWithRetry();
   await loadPersistedToken();
 
   setInterval(async () => {
