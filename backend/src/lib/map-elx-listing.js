@@ -6,6 +6,43 @@
 
 const EMAIL_RE = /\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
 
+/**
+ * ELx's own /lookups department list doesn't cover every department id in
+ * use — an unmapped id used to leak through as a raw code (e.g. "AEROASTRO",
+ * "SCHOOL_ENG"). Fills in the display name for known ids so they render the
+ * same "Long form (ACRONYM)" way as the ones ELx does resolve.
+ */
+const DEPT_ID_FALLBACKS = {
+  AEROASTRO: 'Aeronautics and Astronautics (AeroAstro)',
+  ARCH: 'Architecture',
+  'B&CS': 'Brain & Cognitive Sciences (BCS)',
+  BIOENG: 'Biological Engineering (BioE)',
+  BIOLOGY: 'Biology',
+  CHEME: 'Chemical Engineering (ChemE)',
+  CIS: 'Center for International Studies (CIS)',
+  CMS: 'Comparative Media Studies/Writing (CMS)',
+  CTL: 'Center for Transportation & Logistics (CTL)',
+  'D-LAB': 'MIT D-Lab',
+  DUSP: 'Urban Studies & Planning (DUSP)',
+  ECO: 'Economics',
+  EDGERTON: 'Edgerton Center',
+  HISTORY: 'History',
+  KI: 'Koch Institute for Integrative Cancer Research (KI)',
+  'L&P': 'Linguistics & Philosophy',
+  MATHS: 'Mathematics',
+  MECHE: 'Mechanical Engineering (MechE)',
+  MEDIA: 'Media Lab (MAS)',
+  MISTI: 'MIT International Science and Technology Initiatives (MISTI)',
+  OLE: 'Open Learning Enterprise',
+  PILM: 'Picower Institute for Learning and Memory (PILM)',
+  POLSCI: 'Political Science',
+  SCHOOL_ENG: 'School of Engineering',
+  SCM: 'Supply Chain Management (SCM)',
+  SLOAN: 'Sloan School of Management (Sloan)',
+  STS: 'Science, Technology, and Society (STS)',
+  VPEC: 'Vice President for Energy and Climate (VPEC)',
+};
+
 /** MIT ELx /lookups compensations → pay category */
 export function buildCompensationCategoryMap(lookupsBody) {
   const map = new Map();
@@ -108,7 +145,8 @@ export function mapElxListing(raw, deptMap, compLookup) {
   const tagline = texts.tagline || '';
 
   const deptId = dept.id || '';
-  const deptName = deptMap[deptId] || deptId.replace(/^D_/, '');
+  const rawDeptId = deptId.replace(/^D_/, '');
+  const deptName = deptMap[deptId] || DEPT_ID_FALLBACKS[rawDeptId] || rawDeptId;
 
   const structuredPay = payCreditFromStructured(raw.compensation, compLookup);
   const pay_or_credit = structuredPay ?? inferPayOrCredit(overview, tagline);

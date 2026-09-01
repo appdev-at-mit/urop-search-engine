@@ -4,7 +4,7 @@ const listings = [
   {
     title: 'Machine Learning for Protein Structure Prediction',
     professor: 'Prof. Bonnie Berger',
-    department: 'CSAIL',
+    department: 'Mathematics / Electrical Engineering and Computer Science (EECS)',
     lab: 'Berger Lab',
     description:
       'Join our team working on applying deep learning methods to predict protein 3D structures from amino acid sequences. You will help develop and train neural network models using AlphaFold-inspired architectures, analyze prediction accuracy across protein families, and contribute to a publication-track project. The work involves working with large biological datasets and GPU-accelerated training pipelines.',
@@ -18,7 +18,7 @@ const listings = [
   {
     title: 'Autonomous Drone Navigation in GPS-Denied Environments',
     professor: 'Prof. Nicholas Roy',
-    department: 'AeroAstro',
+    department: 'Aeronautics and Astronautics (AeroAstro)',
     lab: 'Robust Robotics Group',
     description:
       'Work on developing SLAM (Simultaneous Localization and Mapping) algorithms for autonomous quadrotor navigation in indoor and underground environments where GPS is unavailable. The project involves implementing visual-inertial odometry, testing on real drone hardware, and benchmarking against existing approaches.',
@@ -46,7 +46,7 @@ const listings = [
   {
     title: 'Natural Language Processing for Clinical Notes',
     professor: 'Prof. Regina Barzilay',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Machine Learning for Health',
     description:
       'Help build NLP models that extract structured medical information from unstructured clinical notes. The project aims to improve early cancer detection by identifying relevant symptoms and risk factors in patient records. You will work with transformer-based models and medical ontologies.',
@@ -60,7 +60,7 @@ const listings = [
   {
     title: 'Microfluidic Device Design for Cell Sorting',
     professor: 'Prof. Joel Voldman',
-    department: 'EECS',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Voldman Lab',
     description:
       'Design and fabricate microfluidic devices for high-throughput single-cell sorting. The project involves CAD design of microfluidic channels, soft lithography fabrication in the cleanroom, and testing with fluorescent bead and cell samples. Great opportunity to gain cleanroom experience.',
@@ -74,7 +74,7 @@ const listings = [
   {
     title: 'Reinforcement Learning for Robotic Manipulation',
     professor: 'Prof. Pulkit Agrawal',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Improbable AI Lab',
     description:
       'Develop reinforcement learning algorithms for dexterous robotic manipulation tasks. You will work on sim-to-real transfer methods, training policies in simulation (Isaac Gym/MuJoCo) and deploying them on real robotic arms. The goal is to enable robots to manipulate deformable objects like cloth and rope.',
@@ -88,7 +88,7 @@ const listings = [
   {
     title: 'Climate Modeling with High-Resolution Ocean Simulations',
     professor: 'Prof. Raffaele Ferrari',
-    department: 'EAPS',
+    department: 'Earth, Atmospheric and Planetary Sciences (EAPS)',
     lab: 'Ferrari Group',
     description:
       'Run and analyze high-resolution ocean circulation simulations to study mesoscale eddy dynamics and their role in climate. You will use the MITgcm ocean model, process terabytes of simulation output, and create visualizations of ocean currents and temperature distributions.',
@@ -102,7 +102,7 @@ const listings = [
   {
     title: 'Computer Vision for Autonomous Vehicles',
     professor: 'Prof. Daniela Rus',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Distributed Robotics Lab',
     description:
       'Work on 3D object detection and tracking algorithms for self-driving vehicles. The project involves processing LiDAR point cloud data, implementing and evaluating detection models, and testing on real-world driving datasets. You will contribute to improving the safety and reliability of autonomous driving systems.',
@@ -116,7 +116,7 @@ const listings = [
   {
     title: 'CRISPR Gene Drive Modeling in Mosquito Populations',
     professor: 'Prof. Kevin Esvelt',
-    department: 'Media Lab',
+    department: 'Media Arts and Sciences (MAS)',
     lab: 'Sculpting Evolution',
     description:
       'Build computational models to predict the spread of CRISPR-based gene drives through mosquito populations. The project combines population genetics, evolutionary dynamics, and spatial modeling to assess the potential of gene drives for malaria prevention. You will develop agent-based simulations and analyze outcomes under various ecological scenarios.',
@@ -130,7 +130,7 @@ const listings = [
   {
     title: 'Soft Robotics: Bio-Inspired Actuators',
     professor: 'Prof. Xuanhe Zhao',
-    department: 'MechE',
+    department: 'Mechanical Engineering (MechE)',
     lab: 'Zhao Lab',
     description:
       'Design, fabricate, and test soft robotic actuators inspired by biological muscles. The project involves 3D printing with flexible materials, developing control systems for pneumatic actuation, and characterizing the mechanical properties of novel hydrogel composites. Ideal for someone who likes hands-on prototyping.',
@@ -144,7 +144,7 @@ const listings = [
   {
     title: 'Cryptographic Protocol Verification',
     professor: 'Prof. Vinod Vaikuntanathan',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Cryptography and Information Security Group',
     description:
       'Help formally verify the security of cryptographic protocols using automated theorem provers. You will encode protocol specifications in a formal language, prove security properties, and identify potential vulnerabilities. This work bridges theoretical cryptography and practical security analysis.',
@@ -158,7 +158,7 @@ const listings = [
   {
     title: 'Neural Mechanisms of Decision Making',
     professor: 'Prof. Mehrdad Jazayeri',
-    department: 'BCS',
+    department: 'Brain and Cognitive Sciences (BCS)',
     lab: 'Jazayeri Lab',
     description:
       'Analyze neural recording data from non-human primates performing decision-making tasks. You will apply dimensionality reduction techniques, build decoding models, and develop visualizations to understand how populations of neurons represent evidence accumulation and confidence during perceptual decisions.',
@@ -172,7 +172,7 @@ const listings = [
   {
     title: 'Sustainable Concrete with Recycled Aggregates',
     professor: 'Prof. Oral Buyukozturk',
-    department: 'CEE',
+    department: 'Civil and Environmental Engineering (CEE)',
     lab: 'Structural Mechanics & Materials Lab',
     description:
       'Investigate the mechanical properties of concrete made with recycled construction waste aggregates. You will cast and test specimens, perform compression and flexural strength tests, and use micro-CT imaging to analyze the microstructure. The goal is to develop sustainable building materials that reduce construction waste.',
@@ -200,7 +200,7 @@ const listings = [
   {
     title: 'Battery Degradation Analysis Using Electrochemical Impedance',
     professor: 'Prof. Yang Shao-Horn',
-    department: 'MechE',
+    department: 'Mechanical Engineering (MechE)',
     lab: 'Electrochemical Energy Lab',
     description:
       'Study lithium-ion battery degradation mechanisms using electrochemical impedance spectroscopy (EIS). You will perform EIS measurements on battery cells at various states of health, fit equivalent circuit models to the data, and correlate impedance signatures with physical degradation modes like SEI growth and lithium plating.',
@@ -214,7 +214,7 @@ const listings = [
   {
     title: 'Large Language Model Alignment Research',
     professor: 'Prof. Jacob Andreas',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Language & Intelligence Group',
     description:
       'Investigate methods for aligning large language models with human values and intentions. You will design evaluation benchmarks, implement RLHF and constitutional AI techniques, and run experiments to measure alignment across different model architectures. The work contributes to making AI systems safer and more controllable.',
@@ -228,7 +228,7 @@ const listings = [
   {
     title: 'Nanoparticle Drug Delivery for Cancer Therapy',
     professor: 'Prof. Paula Hammond',
-    department: 'ChemE',
+    department: 'Chemical Engineering (ChemE)',
     lab: 'Hammond Lab',
     description:
       'Synthesize and characterize nanoparticle drug delivery systems for targeted cancer therapy. You will prepare layer-by-layer assembled nanoparticles, perform cell viability assays, and use dynamic light scattering and electron microscopy to characterize particle size and morphology. The project aims to improve drug targeting to reduce side effects.',
@@ -242,7 +242,7 @@ const listings = [
   {
     title: 'Probabilistic Programming for Bayesian Inference',
     professor: 'Prof. Vikash Mansinghka',
-    department: 'BCS',
+    department: 'Brain and Cognitive Sciences (BCS)',
     lab: 'Probabilistic Computing Project',
     description:
       'Develop and test inference algorithms in the Gen probabilistic programming language. You will implement new Markov chain Monte Carlo kernels, benchmark inference quality on challenging statistical models, and contribute to the open-source Gen.jl ecosystem. The project bridges computer science, statistics, and cognitive science.',
@@ -256,7 +256,7 @@ const listings = [
   {
     title: 'Fusion Reactor Plasma Diagnostics',
     professor: 'Prof. Anne White',
-    department: 'NSE',
+    department: 'Nuclear Science and Engineering (NSE)',
     lab: 'Plasma Science and Fusion Center',
     description:
       'Develop diagnostic tools for measuring plasma properties in the SPARC tokamak prototype. You will work on Thomson scattering optical systems, analyze spectroscopic data from plasma discharges, and help calibrate diagnostic instruments. A unique chance to work on cutting-edge fusion energy research.',
@@ -270,7 +270,7 @@ const listings = [
   {
     title: 'Wearable Sensors for Gait Analysis',
     professor: 'Prof. Hugh Herr',
-    department: 'Media Lab',
+    department: 'Media Arts and Sciences (MAS)',
     lab: 'Biomechatronics Group',
     description:
       'Build and test wearable IMU-based sensors for human gait analysis. You will design sensor housings, develop real-time data processing algorithms, and validate measurements against motion capture ground truth. The goal is to create affordable gait assessment tools for physical rehabilitation.',
@@ -284,7 +284,7 @@ const listings = [
   {
     title: 'Topology Optimization for Lightweight Structures',
     professor: 'Prof. Josephine Carstensen',
-    department: 'CEE',
+    department: 'Civil and Environmental Engineering (CEE)',
     lab: 'Carstensen Group',
     description:
       'Implement topology optimization algorithms to design lightweight yet strong structural components. You will write finite element analysis code, apply gradient-based optimization, and validate designs with 3D-printed prototypes and mechanical testing. Applications range from aerospace components to civil infrastructure.',
@@ -298,7 +298,7 @@ const listings = [
   {
     title: 'Single-Cell RNA Sequencing Analysis Pipeline',
     professor: 'Prof. Aviv Regev',
-    department: 'Biology',
+    department: 'Biology / Broad Institute of MIT and Harvard (Broad)',
     lab: 'Klarman Cell Observatory',
     description:
       'Develop and improve computational pipelines for analyzing single-cell RNA sequencing (scRNA-seq) data. You will process raw sequencing reads, perform quality control, implement clustering and differential expression analyses, and create visualizations of cell-type landscapes. The work supports efforts to build comprehensive cell atlases of human tissues.',
@@ -312,7 +312,7 @@ const listings = [
   {
     title: 'Explainable AI for Medical Imaging',
     professor: 'Prof. Polina Golland',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Medical Vision Group',
     description:
       'Develop interpretable deep learning models for medical image analysis. You will work on brain MRI segmentation tasks, implement attention visualization methods, and evaluate whether explanations align with clinical expertise. The project aims to increase clinician trust in AI-assisted diagnosis.',
@@ -326,7 +326,7 @@ const listings = [
   {
     title: 'Computational Fluid Dynamics for Wind Turbine Design',
     professor: 'Prof. Youssef Marzouk',
-    department: 'AeroAstro',
+    department: 'Aeronautics and Astronautics (AeroAstro)',
     lab: 'Uncertainty Quantification Group',
     description:
       'Run CFD simulations of wind turbine blade aerodynamics and apply uncertainty quantification methods to robust design optimization. You will use OpenFOAM for flow simulations, implement polynomial chaos expansions for UQ, and analyze how manufacturing variability affects turbine performance.',
@@ -340,7 +340,7 @@ const listings = [
   {
     title: 'Synthetic Biology: Engineering Microbial Biosensors',
     professor: 'Prof. Timothy Lu',
-    department: 'EECS / BioE',
+    department: 'Electrical Engineering and Computer Science (EECS) / Biological Engineering (BioE)',
     lab: 'Synthetic Biology Group',
     description:
       'Engineer bacteria to detect and respond to environmental pollutants using synthetic genetic circuits. You will design genetic constructs, perform molecular cloning, characterize biosensor performance with fluorescence assays, and iterate on circuit designs to improve sensitivity and specificity.',
@@ -354,7 +354,7 @@ const listings = [
   {
     title: 'Graph Neural Networks for Molecular Property Prediction',
     professor: 'Prof. Tommi Jaakkola',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Machine Learning Group',
     description:
       'Develop graph neural network architectures for predicting molecular properties like solubility, toxicity, and binding affinity. You will implement message-passing neural networks, train on molecular benchmark datasets, and analyze model performance to identify failure modes. The work has direct applications in drug discovery.',
@@ -368,7 +368,7 @@ const listings = [
   {
     title: 'Additive Manufacturing of Ceramic Matrix Composites',
     professor: 'Prof. A. John Hart',
-    department: 'MechE',
+    department: 'Mechanical Engineering (MechE)',
     lab: 'Mechanosynthesis Group',
     description:
       'Explore 3D printing of ceramic matrix composites for high-temperature aerospace applications. You will prepare ceramic slurries, operate a custom binder jetting printer, sinter printed parts, and characterize mechanical properties and microstructure. This is a highly hands-on experimental project.',
@@ -382,7 +382,7 @@ const listings = [
   {
     title: 'Privacy-Preserving Machine Learning with Differential Privacy',
     professor: 'Prof. Shafi Goldwasser',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Theory of Computation Group',
     description:
       'Implement and evaluate differentially private training algorithms for machine learning models. You will study the privacy-accuracy tradeoff, implement DP-SGD and its variants, and benchmark on standard datasets. The project aims to enable ML on sensitive data without compromising individual privacy.',
@@ -396,7 +396,7 @@ const listings = [
   {
     title: 'Brain-Computer Interface Signal Processing',
     professor: 'Prof. Ed Boyden',
-    department: 'Media Lab / BCS',
+    department: 'Brain and Cognitive Sciences (BCS) / Media Lab',
     lab: 'Synthetic Neurobiology Group',
     description:
       'Develop signal processing and decoding algorithms for brain-computer interfaces (BCIs). You will process EEG and ECoG neural data, implement real-time spectral analysis, and build decoding models that translate neural activity into control signals. The long-term goal is to restore communication for people with paralysis.',
@@ -410,7 +410,7 @@ const listings = [
   {
     title: 'Optimization Algorithms for Supply Chain Resilience',
     professor: 'Prof. Yossi Sheffi',
-    department: 'CEE / Sloan',
+    department: 'Civil and Environmental Engineering (CEE) / Sloan School of Management (Sloan)',
     lab: 'Center for Transportation & Logistics',
     description:
       'Develop optimization models and algorithms to improve supply chain resilience against disruptions. You will formulate mixed-integer programming models, implement solution algorithms, and test on real-world supply chain network data. The research has implications for how companies prepare for events like pandemics and natural disasters.',
@@ -424,7 +424,7 @@ const listings = [
   {
     title: 'Haptic Feedback Systems for Surgical Robots',
     professor: 'Prof. Harry Asada',
-    department: 'MechE',
+    department: 'Mechanical Engineering (MechE)',
     lab: 'd\'Arbeloff Lab',
     description:
       'Design and build haptic feedback systems for minimally invasive surgical robots. You will prototype force-sensing end effectors, develop real-time control algorithms for force rendering, and conduct user studies with surgical trainees. The goal is to restore the sense of touch during robotic surgery.',
@@ -452,7 +452,7 @@ const listings = [
   {
     title: 'Computational Social Science: Polarization on Social Media',
     professor: 'Prof. Dean Eckles',
-    department: 'Sloan / IDSS',
+    department: 'Sloan School of Management (Sloan) / Institute for Data, Systems, and Society (IDSS)',
     lab: 'Eckles Lab',
     description:
       'Analyze large-scale social media datasets to study political polarization and information spread. You will collect and process Twitter/X data, apply network analysis methods, implement causal inference techniques, and visualize patterns of polarization. The project combines data science with social science theory.',
@@ -480,7 +480,7 @@ const listings = [
   {
     title: 'Robotic Assembly in Unstructured Environments',
     professor: 'Prof. Russ Tedrake',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Robot Locomotion Group',
     description:
       'Develop motion planning and control algorithms for robotic assembly tasks. You will work on grasp planning, trajectory optimization, and task-and-motion planning (TAMP) to enable robots to assemble furniture from parts in cluttered environments. The project uses Drake simulation and real robot hardware.',
@@ -494,7 +494,7 @@ const listings = [
   {
     title: 'Epidemiological Modeling of Infectious Diseases',
     professor: 'Prof. Maia Majumder',
-    department: 'IDSS',
+    department: 'Institute for Data, Systems, and Society (IDSS)',
     lab: 'Computational Epidemiology Group',
     description:
       'Build compartmental and agent-based models to simulate the spread of infectious diseases. You will implement SIR/SEIR models, calibrate parameters using real-world surveillance data, and generate forecasts and scenario analyses. The work informs public health decision-making for disease outbreaks.',
@@ -508,7 +508,7 @@ const listings = [
   {
     title: 'Acoustic Metamaterials for Sound Insulation',
     professor: 'Prof. Nicholas Fang',
-    department: 'MechE',
+    department: 'Mechanical Engineering (MechE)',
     lab: 'Fang Lab',
     description:
       'Design and test acoustic metamaterial structures for enhanced sound insulation. You will use finite element simulations (COMSOL) to model wave propagation, fabricate prototypes using 3D printing, and measure transmission loss in an acoustic testing chamber. Applications include noise barriers and architectural acoustics.',
@@ -522,7 +522,7 @@ const listings = [
   {
     title: 'Causal Machine Learning for Economic Policy',
     professor: 'Prof. Victor Chernozhukov',
-    department: 'Economics / IDSS',
+    department: 'Economics / Institute for Data, Systems, and Society (IDSS)',
     lab: 'Chernozhukov Group',
     description:
       'Apply causal machine learning methods to estimate treatment effects in economic policy evaluations. You will implement double/debiased machine learning estimators, work with large observational datasets, and evaluate the impact of policy interventions like minimum wage changes and education programs.',
@@ -536,7 +536,7 @@ const listings = [
   {
     title: 'Flexible Electronics for Health Monitoring',
     professor: 'Prof. Jeehwan Kim',
-    department: 'MechE / MSE',
+    department: 'Mechanical Engineering (MechE) / Materials Science and Engineering (MSE)',
     lab: 'Kim Lab',
     description:
       'Fabricate flexible electronic devices for continuous health monitoring. You will work with thin-film deposition, photolithography, and transfer printing techniques to create stretchable sensors that can measure vital signs. The project aims to develop comfortable, long-wear health monitoring patches.',
@@ -550,7 +550,7 @@ const listings = [
   {
     title: 'Multi-Agent Reinforcement Learning for Traffic Control',
     professor: 'Prof. Cathy Wu',
-    department: 'CEE / CSAIL',
+    department: 'Civil and Environmental Engineering (CEE) / Computer Science and Artificial Intelligence Laboratory (CSAIL)',
     lab: 'Wu Lab',
     description:
       'Develop multi-agent RL algorithms for optimizing traffic signal control in urban networks. You will build simulation environments (SUMO), train cooperative RL agents, and evaluate the impact on traffic flow, emissions, and travel times. The project addresses real-world urban congestion problems.',
@@ -578,7 +578,7 @@ const listings = [
   {
     title: 'Satellite Image Analysis for Urban Growth',
     professor: 'Prof. Carlo Ratti',
-    department: 'Architecture / DUSP',
+    department: 'Architecture / Urban Studies and Planning (DUSP)',
     lab: 'Senseable City Lab',
     description:
       'Apply computer vision and remote sensing techniques to satellite imagery to track urban growth patterns worldwide. You will process multi-temporal satellite data, train image segmentation models, and create visualizations of urban expansion over decades. The project informs sustainable urban planning.',
@@ -592,7 +592,7 @@ const listings = [
   {
     title: 'Microbiome Engineering for Gut Health',
     professor: 'Prof. Eric Alm',
-    department: 'BioE / CEE',
+    department: 'Biological Engineering (BioE) / Civil and Environmental Engineering (CEE)',
     lab: 'Alm Lab',
     description:
       'Engineer microbial communities to promote gut health and treat inflammatory bowel disease. You will perform 16S rRNA sequencing analysis, culture anaerobic gut bacteria, design synthetic microbial consortia, and test their therapeutic effects in in-vitro gut models. Combines computation and wet-lab work.',
@@ -606,7 +606,7 @@ const listings = [
   {
     title: 'Formal Verification of Distributed Systems',
     professor: 'Prof. Adam Chlipala',
-    department: 'CSAIL',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Programming Languages and Verification Group',
     description:
       'Use the Coq proof assistant to formally verify the correctness of distributed system protocols. You will encode system specifications, prove safety and liveness properties, and extract verified implementations. This rigorous approach eliminates entire classes of bugs that testing cannot catch.',
@@ -620,7 +620,7 @@ const listings = [
   {
     title: 'High-Entropy Alloy Discovery with Machine Learning',
     professor: 'Prof. Ju Li',
-    department: 'NSE / MSE',
+    department: 'Nuclear Science and Engineering (NSE) / Materials Science and Engineering (MSE)',
     lab: 'Li Lab',
     description:
       'Use machine learning to accelerate the discovery of high-entropy alloys with superior mechanical properties. You will build predictive models trained on DFT calculation data, run molecular dynamics simulations, and suggest promising alloy compositions for experimental validation. The project bridges computational materials science and AI.',
@@ -634,7 +634,7 @@ const listings = [
   {
     title: 'Conversational AI for Mental Health Support',
     professor: 'Prof. Rosalind Picard',
-    department: 'Media Lab',
+    department: 'Media Arts and Sciences (MAS)',
     lab: 'Affective Computing Group',
     description:
       'Develop and evaluate a conversational AI system designed to provide mental health support to college students. You will fine-tune language models on counseling dialogues, implement safety guardrails, conduct user studies, and analyze conversation quality metrics. The work requires sensitivity to mental health topics and responsible AI development.',
@@ -662,7 +662,7 @@ const listings = [
   {
     title: 'Computer Architecture: RISC-V Processor Design',
     professor: 'Prof. Arvind',
-    department: 'EECS',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Computation Structures Group',
     description:
       'Design and implement RISC-V processor extensions for accelerating machine learning workloads. You will write hardware descriptions in Bluespec SystemVerilog, simulate processor designs, synthesize for FPGA targets, and benchmark performance against baseline architectures.',
@@ -676,7 +676,7 @@ const listings = [
   {
     title: 'Ocean Plastic Pollution Tracking with Drifter Buoys',
     professor: 'Prof. Thomas Peacock',
-    department: 'MechE',
+    department: 'Mechanical Engineering (MechE)',
     lab: 'Environmental Dynamics Lab',
     description:
       'Deploy and analyze data from GPS-tracked drifter buoys to study ocean plastic pollution transport. You will build low-cost drifter prototypes, process GPS trajectory data, and develop Lagrangian transport models to predict where ocean plastic accumulates. Field work at MIT Sailing Pavilion and coastal deployments.',
@@ -690,7 +690,7 @@ const listings = [
   {
     title: 'Algorithmic Game Theory and Mechanism Design',
     professor: 'Prof. Constantinos Daskalakis',
-    department: 'EECS',
+    department: 'Electrical Engineering and Computer Science (EECS)',
     lab: 'Theory of Computation Group',
     description:
       'Conduct theoretical and computational research on algorithmic game theory, focusing on auction design and equilibrium computation. You will implement algorithms for finding Nash equilibria, run computational experiments, and potentially contribute to theoretical proofs. Strong mathematical background required.',
