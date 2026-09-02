@@ -21,7 +21,11 @@ def main():
         page = context.new_page()
 
         print(f"Opening {ELX_URL} ...")
-        page.goto(ELX_URL, wait_until="networkidle")
+        # domcontentloaded, not networkidle: the Touchstone/Duo redirect chain
+        # holds connections open (Duo long-polls), so networkidle can hit its
+        # 30s timeout and kill the script mid-login. We only need the page
+        # open here — you drive the rest of the login by hand anyway.
+        page.goto(ELX_URL, wait_until="domcontentloaded")
 
         print()
         print("=== Log in through MIT auth / Duo / certificates ===")
