@@ -2,11 +2,12 @@ name: Refresh ELx token
 
 on:
   schedule:
-    # 03:00 UTC daily, three hours ahead of the backend's 06:00 UTC scrape.
-    # GitHub does not guarantee scheduled runs fire on time — delays of 10-30+
-    # minutes are common at peak — and a late refresh means the scrape finds no
-    # valid token and silently skips. The token lasts ~24h, so refreshing early
-    # costs nothing and buys slack for a delayed or retried run.
+    # This job mints a fresh token and then scrapes with it in the same run, so
+    # the wall-clock time it fires does not matter. That matters because GitHub
+    # makes no punctuality guarantee: the 2026-09-02 run was scheduled for
+    # 03:00 UTC and actually fired at 07:44 UTC, 4h44m late. Chaining the scrape
+    # here removes the race against the backend's own 06:00 UTC cron, which
+    # previously found an expired token and skipped silently.
     - cron: '0 3 * * *'
   workflow_dispatch: {}
 
@@ -37,3 +38,27 @@ jobs:
           ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
           BACKEND_URL: https://miturop.org
         run: python scripts/refresh_token.py
+
+      # Scrape immediately, while the token we just pushed is known-fresh.
+      # This step only runs if the refresh above succeeded, so ordering is
+      # guaranteed by construction instead of by hoping two unsynchronized
+      # cron schedules line up.
+      - name: Scrape listings with the fresh token
+        env:
+          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+        run: |
+          set -euo pipefail
+          response=$(curl -sS --fail-with-body --max-time 300 -X POST \
+            https://miturop.org/api/admin/refresh-listings \
+            -H "x-admin-key: $ADMIN_SECRET")
+          echo "$response" | jq '.'
+          # A 200 with ok=false still means the scrape did not happen.
+          echo "$response" | jq -e '.ok == true' >/dev/null
+          {
+            echo "### ELx scrape"
+            echo ''
+            echo "- inserted: $(echo "$response" | jq -r '.inserted')"
+            echo "- updated: $(echo "$response" | jq -r '.updated')"
+            echo "- deactivated stale: $(echo "$response" | jq -r '.deactivatedStale')"
+            echo "- total live listings: $(echo "$response" | jq -r '.total')"
+          } >> "$GITHUB_STEP_SUMMARY"
