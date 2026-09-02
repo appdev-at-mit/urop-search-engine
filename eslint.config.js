@@ -9,7 +9,10 @@ export default defineConfig([
   // cdk.out holds ~1GB of synthesized asset bundles (vendored node_modules
   // included), which made a local `npm run lint` hang for minutes. CI never
   // noticed because a fresh checkout has no cdk.out.
-  globalIgnores(['dist', 'infra/cdk.out', '**/node_modules']),
+  // .venv is here because Playwright's pip package bundles a Node driver with
+  // ~1000 lint errors' worth of .d.ts files. CI never saw it (fresh checkouts
+  // have no venv), but it broke `npm run lint` locally.
+  globalIgnores(['dist', 'infra/cdk.out', '**/node_modules', '**/.venv']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

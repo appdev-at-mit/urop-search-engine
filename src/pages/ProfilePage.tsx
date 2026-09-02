@@ -76,7 +76,7 @@ function ExperienceForm({
 
   return (
     <form onSubmit={handleSubmit} className="rounded-xl border border-primary/20 bg-primary/[0.02] p-4 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-medium text-text-tertiary">Title / Role *</label>
           <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Research Assistant" className={inputClass} />
@@ -86,7 +86,7 @@ function ExperienceForm({
           <input type="text" value={organization} onChange={e => setOrganization(e.target.value)} placeholder="e.g. CSAIL — Berger Lab" className={inputClass} />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-medium text-text-tertiary">Start Date</label>
           <input type="text" value={startDate} onChange={e => setStartDate(e.target.value)} placeholder="e.g. Sep 2025" className={inputClass} />
@@ -260,7 +260,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <p className="mb-1 text-sm font-medium text-text-tertiary">personalized</p>
-          <h1 className="mb-3 text-4xl font-bold tracking-tight text-text">your profile</h1>
+          <h1 className="mb-3 text-2xl font-bold tracking-tight text-text sm:text-3xl lg:text-4xl">your profile</h1>
           <p className="mb-8 text-sm text-text-tertiary">
             Sign in with your MIT Google account to upload your resume and get personalized UROP rankings.
           </p>
@@ -305,7 +305,7 @@ export default function ProfilePage() {
       <div className="animate-fade-in mb-6 flex items-center justify-between">
         <div>
           <p className="mb-1 text-sm font-medium text-text-tertiary">personalized</p>
-          <h1 className="text-4xl font-bold tracking-tight text-text">your profile</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl lg:text-4xl">your profile</h1>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
@@ -449,7 +449,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Year + GPA row */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-semibold text-text">Graduation Year</label>
               <input

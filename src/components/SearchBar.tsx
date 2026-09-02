@@ -91,21 +91,31 @@ export default function SearchBar({
             : 'border border-border focus-within:border-primary/40'
         }`}
       >
-        <div className={`flex items-center gap-3 ${large ? 'px-7 py-5' : 'px-4 py-3'}`}>
-          <Search className={`shrink-0 text-text-tertiary ${large ? 'h-6 w-6' : 'h-4 w-4'}`} />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={placeholder}
-            className={`w-full bg-transparent text-text outline-none placeholder:text-text-tertiary ${
-              large ? 'text-xl' : 'text-base'
-            }`}
-          />
+        <div
+          className={
+            large
+              ? 'flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:px-7 sm:py-5'
+              : 'flex items-center gap-3 px-4 py-3'
+          }
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <Search className={`shrink-0 text-text-tertiary ${large ? 'h-5 w-5 sm:h-6 sm:w-6' : 'h-4 w-4'}`} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={placeholder}
+              className={`min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-text-tertiary ${
+                large ? 'text-base sm:text-xl' : 'text-base'
+              }`}
+            />
+          </div>
           <button
             type="submit"
             className={`shrink-0 rounded-full bg-primary font-medium text-white transition-all hover:bg-primary-dark active:scale-[0.97] ${
-              large ? 'flex items-center gap-2 px-7 py-3 text-lg' : 'px-4 py-1.5 text-base'
+              large
+                ? 'flex w-full items-center justify-center gap-2 px-6 py-3 text-base sm:w-auto sm:px-7 sm:text-lg'
+                : 'px-4 py-1.5 text-base'
             }`}
           >
             Search
@@ -114,7 +124,7 @@ export default function SearchBar({
         </div>
 
         {showFilters && (
-          <div className="border-t border-border/60 px-7 py-4">
+          <div className="border-t border-border/60 px-4 py-4 sm:px-7">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-text-secondary">
                 <Filter className="h-4 w-4 shrink-0 text-text-tertiary" aria-hidden />
@@ -133,7 +143,7 @@ export default function SearchBar({
               )}
             </div>
 
-            <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-x-4 sm:gap-y-3">
               <LabeledFilterSelect
                 id="filter-opportunity"
                 label="Opportunity type"

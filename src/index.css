@@ -94,7 +94,11 @@ body {
   position: absolute;
   left: 50%;
   top: 0;
-  white-space: nowrap;
+  /* No nowrap: at 320px "research opportunity." rendered 338px wide and pushed
+     the whole page into horizontal scroll. The hidden .width-setter already
+     wraps, so it sizes the box and these absolute copies wrap to match. On
+     wide viewports the phrase still fits on one line, so nothing changes. */
+  width: 100%;
   transform: translateX(-50%) translateY(40%);
 }
 

@@ -85,7 +85,7 @@ export default function LabsPage() {
         <p className="mb-1 text-base font-medium text-text-tertiary">
           discover
         </p>
-        <h1 className="mb-3 text-5xl font-bold tracking-tight text-text">lab groups</h1>
+        <h1 className="mb-3 text-3xl font-bold tracking-tight text-text sm:text-4xl lg:text-5xl">lab groups</h1>
         <p className="mb-8 text-lg text-text-tertiary">
           Browse MIT research labs and groups to find research areas that interest you
         </p>

@@ -86,7 +86,7 @@ export default function ListingDetailPage() {
       >
         <div className="mb-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-text">
+            <h1 className="text-2xl font-bold leading-tight tracking-tight text-text sm:text-3xl lg:text-4xl">
               {listing.title}
             </h1>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">

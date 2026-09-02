@@ -56,7 +56,7 @@ export default function ListingsPage() {
         <p className="mb-1 text-base font-medium text-text-tertiary">
           search
         </p>
-        <h1 className="mb-8 text-5xl font-bold tracking-tight text-text">browse listings</h1>
+        <h1 className="mb-8 text-3xl font-bold tracking-tight text-text sm:text-4xl lg:text-5xl">browse listings</h1>
       </div>
 
       <div className="animate-fade-in-up mb-8" style={{ animationDelay: '100ms' }}>

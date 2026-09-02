@@ -60,7 +60,7 @@ export default function LabDetailPage() {
       <article className="animate-fade-in-up rounded-2xl bg-surface p-8 sm:p-10">
         <div className="mb-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-text">
+            <h1 className="text-2xl font-bold leading-tight tracking-tight text-text sm:text-3xl lg:text-4xl">
               {lab.name}
               {lab.acronym && (
                 <span className="ml-2 text-xl font-normal text-text-tertiary">
