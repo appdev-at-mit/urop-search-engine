@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { User, LogOut, ChevronDown } from 'lucide-react'
+import { User, LogOut, ChevronDown, LogIn } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 
 const navLinks = [
@@ -70,7 +70,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-6 sm:pt-4">
       {/* Equal 1fr side tracks keep the nav dead-centre in the bar regardless
           of how wide the logo or the profile control happen to be. */}
-      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl border border-white/50 bg-surface/60 px-3 py-2 shadow-[0_8px_30px_-12px_rgb(26_26_46/0.25)] backdrop-blur-xl sm:gap-4 sm:px-5 sm:py-2.5">
+      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border border-white/50 bg-surface/60 px-3 py-2 max-[360px]:gap-1 max-[360px]:px-2 shadow-[0_8px_30px_-12px_rgb(26_26_46/0.25)] backdrop-blur-xl sm:gap-4 sm:px-5 sm:py-2.5">
         <Link to="/" className="flex items-center gap-2.5 justify-self-start transition-opacity hover:opacity-70">
           <img src="/logo.png" alt="UROP Search logo" className="h-9 w-9" />
           <span className="hidden text-lg font-bold tracking-tight text-primary sm:inline">urop search</span>
@@ -99,7 +99,7 @@ export default function Header() {
               onFocus={() => setHoverIdx(i)}
               onBlur={() => setHoverIdx(null)}
               aria-current={location.pathname === link.to ? 'page' : undefined}
-              className={`relative z-10 rounded-full px-3 py-1.5 text-sm transition-colors sm:px-4 sm:text-base ${
+              className={`relative z-10 rounded-full px-3 py-1.5 text-sm transition-colors max-[360px]:px-2 max-[360px]:text-[0.8125rem] sm:px-4 sm:text-base ${
                 location.pathname === link.to
                   ? 'font-semibold text-text'
                   : 'font-medium text-text-secondary hover:text-text'
@@ -133,12 +133,15 @@ export default function Header() {
                   <ChevronDown className={`h-3.5 w-3.5 text-text-tertiary transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
               ) : (
-                <Link
-                  to="/profile"
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-surface text-text-tertiary transition-colors hover:bg-primary/10 hover:text-primary"
+                // Plain <a>, not <Link>: /auth/google is a backend route, so
+                // client-side routing would just render the SPA shell.
+                <a
+                  href="/auth/google"
+                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95 sm:px-4"
                 >
-                  <User className="h-5 w-5" />
-                </Link>
+                  <LogIn className="h-4 w-4 max-[360px]:hidden" />
+                  Sign in
+                </a>
               )}
 
               {dropdownOpen && user && (
